@@ -2784,6 +2784,63 @@
       return audioCtx;
     }
 
+    function playIntroTaDum() {
+      if (soundMuted) return;
+      const ctx = getAudio(), t = ctx.currentTime;
+
+      // — First hit: deep bass thump (the "TA") —
+      const bass1 = ctx.createOscillator(); bass1.type = 'sine'; bass1.frequency.value = 58;
+      const b1g = ctx.createGain(); b1g.gain.setValueAtTime(0.35, t);
+      b1g.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+      bass1.connect(b1g).connect(ctx.destination); bass1.start(t); bass1.stop(t + 0.9);
+
+      // Sub-bass layer
+      const sub1 = ctx.createOscillator(); sub1.type = 'sine'; sub1.frequency.value = 29;
+      const s1g = ctx.createGain(); s1g.gain.setValueAtTime(0.2, t);
+      s1g.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+      sub1.connect(s1g).connect(ctx.destination); sub1.start(t); sub1.stop(t + 0.8);
+
+      // Impact noise
+      const nBuf = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
+      const nData = nBuf.getChannelData(0);
+      for (let i = 0; i < nData.length; i++) nData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.01));
+      const nSrc = ctx.createBufferSource(); nSrc.buffer = nBuf;
+      const nlp = ctx.createBiquadFilter(); nlp.type = 'lowpass'; nlp.frequency.value = 400;
+      const ng = ctx.createGain(); ng.gain.setValueAtTime(0.12, t);
+      nSrc.connect(nlp).connect(ng).connect(ctx.destination); nSrc.start(t); nSrc.stop(t + 0.08);
+
+      // — Second hit: resolving chord (the "DUM") at +1.0s —
+      const d = 1.0;
+      // Bass note
+      const bass2 = ctx.createOscillator(); bass2.type = 'sine'; bass2.frequency.value = 87;
+      const b2g = ctx.createGain(); b2g.gain.setValueAtTime(0.3, t + d);
+      b2g.gain.exponentialRampToValueAtTime(0.001, t + d + 1.5);
+      bass2.connect(b2g).connect(ctx.destination); bass2.start(t + d); bass2.stop(t + d + 1.5);
+
+      // Sub
+      const sub2 = ctx.createOscillator(); sub2.type = 'sine'; sub2.frequency.value = 44;
+      const s2g = ctx.createGain(); s2g.gain.setValueAtTime(0.18, t + d);
+      s2g.gain.exponentialRampToValueAtTime(0.001, t + d + 1.2);
+      sub2.connect(s2g).connect(ctx.destination); sub2.start(t + d); sub2.stop(t + d + 1.2);
+
+      // Chord overtones (fifth + octave)
+      [130, 174].forEach(freq => {
+        const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq;
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.08, t + d);
+        g.gain.exponentialRampToValueAtTime(0.001, t + d + 1.3);
+        o.connect(g).connect(ctx.destination); o.start(t + d); o.stop(t + d + 1.3);
+      });
+
+      // Second impact noise
+      const n2Buf = ctx.createBuffer(1, ctx.sampleRate * 0.06, ctx.sampleRate);
+      const n2Data = n2Buf.getChannelData(0);
+      for (let i = 0; i < n2Data.length; i++) n2Data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.008));
+      const n2Src = ctx.createBufferSource(); n2Src.buffer = n2Buf;
+      const n2lp = ctx.createBiquadFilter(); n2lp.type = 'lowpass'; n2lp.frequency.value = 500;
+      const n2g = ctx.createGain(); n2g.gain.setValueAtTime(0.1, t + d);
+      n2Src.connect(n2lp).connect(n2g).connect(ctx.destination); n2Src.start(t + d); n2Src.stop(t + d + 0.06);
+    }
+
     function playClockSwitch() {
       if (soundMuted) return;
       const ctx = getAudio(), t = ctx.currentTime;
@@ -3678,6 +3735,32 @@
     bindSteppers();
 
     // 0.5s blank → 2.2s rise+clear → 2.46s hold → 0.84s blur = ~6s
+    // Play intro "ta-dum" synced with the text rise (needs user tap on mobile)
+    let introPlayed = false;
+    function tryPlayIntro() {
+      if (introPlayed) return;
+      introPlayed = true;
+      // Text animation starts at 0.5s; fire immediately since user tap triggers this
+      playIntroTaDum();
+    }
+    // On desktop, AudioContext may auto-start — schedule at 0.5s
+    setTimeout(() => {
+      if (!introPlayed && audioCtx && audioCtx.state === 'running') tryPlayIntro();
+    }, 500);
+    // On mobile, require a tap on the intro screen
+    introEl.addEventListener('click', () => {
+      if (!introPlayed) {
+        getAudio(); // ensure context is created + resumed
+        tryPlayIntro();
+      }
+    }, { once: false });
+    introEl.addEventListener('touchstart', () => {
+      if (!introPlayed) {
+        getAudio();
+        tryPlayIntro();
+      }
+    }, { once: false });
+
     setTimeout(() => switchView(introEl, homeEl), 5160);
 
     if ('serviceWorker' in navigator) {
