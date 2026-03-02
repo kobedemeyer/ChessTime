@@ -458,19 +458,15 @@
     #clock-toolbar {
       background: #160a02;
       border-bottom: 2px solid #2c1808;
-      padding: 10px 20px;
+      padding: 10px 12px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-    }
-
-    .toolbar-right {
-      display: flex;
-      gap: 8px;
+      gap: 6px;
     }
 
     .tb-btn {
-      padding: 7px 18px;
+      flex: 1;
+      padding: 7px 4px;
       border: 1px solid #4c2c14;
       border-radius: 6px;
       cursor: pointer;
@@ -482,6 +478,7 @@
       background: #2c1808;
       color: #906030;
       transition: all 0.15s;
+      text-align: center;
     }
 
     .tb-btn:hover {
@@ -531,6 +528,16 @@
     #checkmate-btn:disabled {
       opacity: 0.25;
       cursor: not-allowed;
+    }
+
+    #mute-btn {
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    #mute-btn.muted {
+      color: #4a2c14;
+      text-decoration: line-through;
     }
 
     /* ── Checkmate modal ── */
@@ -2151,7 +2158,8 @@
       }
 
       #clock-toolbar {
-        padding: 16px 20px;
+        padding: 10px 8px;
+        gap: 4px;
       }
 
       .carousel-cards {
@@ -2261,12 +2269,11 @@
   <!-- ══ Clock View ══ -->
   <div id="clock-view">
     <div id="clock-toolbar">
-      <button class="tb-btn" id="change-btn">← Change</button>
-      <div class="toolbar-right">
-        <button class="tb-btn" id="pause-btn" disabled>Pause</button>
-        <button class="tb-btn" id="checkmate-btn" disabled>☆ Checkmate</button>
-        <button class="tb-btn" id="reset-btn">Reset</button>
-      </div>
+      <button class="tb-btn" id="change-btn">Change</button>
+      <button class="tb-btn" id="pause-btn" disabled>Pause</button>
+      <button class="tb-btn" id="checkmate-btn" disabled>Checkmate</button>
+      <button class="tb-btn" id="reset-btn">Reset</button>
+      <button class="tb-btn" id="mute-btn" title="Toggle sound">♪</button>
     </div>
     <div id="clock-area">
       <div class="clock-panel" id="p1">
@@ -2767,6 +2774,109 @@
     let splashUsed = [false, false]; // [p1, p2]
     let ghostUsed = [false, false];
 
+    /* ── Sound engine (Web Audio API) ──────────────────────────────────── */
+    let audioCtx = null;
+    let soundMuted = localStorage.getItem('ct-mute') === '1';
+
+    function getAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playClockSwitch() {
+      if (soundMuted) return;
+      const ctx = getAudio(), t = ctx.currentTime;
+      // Sharp click via short noise burst
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.008));
+      const noise = ctx.createBufferSource(); noise.buffer = buf;
+      const nGain = ctx.createGain(); nGain.gain.setValueAtTime(0.15, t);
+      noise.connect(nGain).connect(ctx.destination); noise.start(t); noise.stop(t + 0.04);
+      // Mid-frequency ping
+      const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(800, t);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.08);
+    }
+
+    function playGameStart() {
+      if (soundMuted) return;
+      const ctx = getAudio(), t = ctx.currentTime;
+      const osc = ctx.createOscillator(); osc.type = 'sine';
+      osc.frequency.setValueAtTime(500, t); osc.frequency.exponentialRampToValueAtTime(1200, t + 0.15);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.2);
+    }
+
+    function playClick() {
+      if (soundMuted) return;
+      const ctx = getAudio(), t = ctx.currentTime;
+      const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(600, t);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.04);
+    }
+
+    function playPause() {
+      if (soundMuted) return;
+      const ctx = getAudio(), t = ctx.currentTime;
+      const osc = ctx.createOscillator(); osc.type = 'sine';
+      osc.frequency.setValueAtTime(500, t); osc.frequency.exponentialRampToValueAtTime(300, t + 0.15);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.18);
+    }
+
+    function playResume() {
+      if (soundMuted) return;
+      const ctx = getAudio(), t = ctx.currentTime;
+      const osc = ctx.createOscillator(); osc.type = 'sine';
+      osc.frequency.setValueAtTime(300, t); osc.frequency.exponentialRampToValueAtTime(500, t + 0.15);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.18);
+    }
+
+    function playGameOver() {
+      if (soundMuted) return;
+      const ctx = getAudio(), t = ctx.currentTime;
+      [700, 550, 400, 280].forEach((freq, i) => {
+        const osc = ctx.createOscillator(); osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, t + i * 0.18);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.15, t + i * 0.18);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.18 + 0.25);
+        osc.connect(g).connect(ctx.destination); osc.start(t + i * 0.18); osc.stop(t + i * 0.18 + 0.25);
+      });
+    }
+
+    function playBattleAbility() {
+      if (soundMuted) return;
+      const ctx = getAudio(), t = ctx.currentTime;
+      // Swoosh: noise with bandpass sweep
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.12));
+      const noise = ctx.createBufferSource(); noise.buffer = buf;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 3;
+      bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(2000, t + 0.2);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      noise.connect(bp).connect(g).connect(ctx.destination); noise.start(t); noise.stop(t + 0.3);
+      // Rising ping
+      const osc = ctx.createOscillator(); osc.type = 'sine';
+      osc.frequency.setValueAtTime(400, t); osc.frequency.exponentialRampToValueAtTime(1600, t + 0.2);
+      const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.1, t + 0.05); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      osc.connect(g2).connect(ctx.destination); osc.start(t); osc.stop(t + 0.25);
+    }
+
+    function playVictoryChord() {
+      if (soundMuted) return;
+      const ctx = getAudio(), t = ctx.currentTime;
+      [523, 659, 784].forEach(freq => {
+        const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(freq, t);
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.4);
+      });
+    }
+
     /* ── DOM ──────────────────────────────────────────────────────────────── */
     const introEl = document.getElementById('intro');
     const homeEl = document.getElementById('home-screen');
@@ -2825,13 +2935,13 @@
         const tile = document.createElement('div');
         tile.className = 'ts-tile';
         tile.innerHTML = `<div class="ts-tile-time">${p.label}</div><div class="ts-tile-category">${p.category}</div>`;
-        tile.addEventListener('click', () => { baseTimes = [p.min * 60, p.min * 60]; increments = [p.inc, p.inc]; afterTimeSelect(); });
+        tile.addEventListener('click', () => { playClick(); baseTimes = [p.min * 60, p.min * 60]; increments = [p.inc, p.inc]; afterTimeSelect(); });
         grid.appendChild(tile);
       });
       const custom = document.createElement('div');
       custom.className = 'ts-tile custom';
       custom.innerHTML = `<div class="ts-tile-time">Custom</div><div class="ts-tile-category">Set your own time</div>`;
-      custom.addEventListener('click', openCustomModal);
+      custom.addEventListener('click', () => { playClick(); openCustomModal(); });
       grid.appendChild(custom);
     }
 
@@ -2979,10 +3089,11 @@
     /* ── Clock logic ───────────────────────────────────────────────────────── */
     function switchClock(player) {
       if (gameOver) return;
-      if (active === -1) { active = 1 - player; paused = false; moves[player]++; startLoop(); return; }
+      if (active === -1) { active = 1 - player; paused = false; moves[player]++; playGameStart(); startLoop(); return; }
       if (paused || active !== player) return;
       if (increments[player] > 0) times[player] += increments[player];
       moves[player]++; active = 1 - player; lastTS = null;
+      playClockSwitch();
     }
 
     /* ── Game over ─────────────────────────────────────────────────────────── */
@@ -2993,7 +3104,7 @@
     function togglePause() {
       if (gameOver || active === -1) return;
       paused = !paused;
-      if (paused) stopLoop(); else startLoop();
+      if (paused) { stopLoop(); playPause(); } else { startLoop(); playResume(); }
       updateDisplay();
     }
 
@@ -3010,16 +3121,19 @@
     }
 
     document.getElementById('gameover-again').addEventListener('click', () => {
+      playClick();
       gameoverEl.style.display = 'none';
       reset(); cvEl.style.display = 'flex';
     });
     document.getElementById('gameover-change').addEventListener('click', () => {
+      playClick();
       currentWhitePlayer = null; currentBlackPlayer = null;
       reset();
       switchView(gameoverEl, homeEl);
     });
 
     document.getElementById('change-btn').addEventListener('click', () => {
+      playClick();
       stopLoop(); setBattleMode(false); activeOpening = null; switchView(cvEl, homeEl);
     });
 
@@ -3036,13 +3150,24 @@
     panels[0].addEventListener('click', () => switchClock(0));
     panels[1].addEventListener('click', () => switchClock(1));
     pauseBtn.addEventListener('click', togglePause);
-    document.getElementById('reset-btn').addEventListener('click', reset);
+    document.getElementById('reset-btn').addEventListener('click', () => { playClick(); reset(); });
+
+    /* ── Mute toggle ───────────────────────────────────────────────────── */
+    const muteBtn = document.getElementById('mute-btn');
+    if (soundMuted) muteBtn.classList.add('muted');
+    muteBtn.addEventListener('click', () => {
+      soundMuted = !soundMuted;
+      muteBtn.classList.toggle('muted', soundMuted);
+      localStorage.setItem('ct-mute', soundMuted ? '1' : '0');
+      if (!soundMuted) playClick();
+    });
 
     /* ── Checkmate / Draw declaration ──────────────────────────────────────── */
     const cmModal = document.getElementById('checkmate-modal');
 
     document.getElementById('checkmate-btn').addEventListener('click', () => {
       if (active === -1 || gameOver) return;
+      playClick();
       /* Pause the clock while choosing */
       if (!paused) { paused = true; stopLoop(); updateDisplay(); }
       /* Show player names on buttons */
@@ -3052,26 +3177,30 @@
     });
 
     document.getElementById('cm-cancel').addEventListener('click', () => {
+      playClick();
       cmModal.classList.remove('show');
     });
 
     document.getElementById('cm-white').addEventListener('click', () => {
       cmModal.classList.remove('show');
+      playVictoryChord();
       declareWinner(1, 'checkmate'); /* loser = black (index 1) */
     });
 
     document.getElementById('cm-black').addEventListener('click', () => {
       cmModal.classList.remove('show');
+      playVictoryChord();
       declareWinner(0, 'checkmate'); /* loser = white (index 0) */
     });
 
     document.getElementById('cm-draw').addEventListener('click', () => {
+      playClick();
       cmModal.classList.remove('show');
       declareDraw();
     });
 
     function declareWinner(loser, reason) {
-      gameOver = true; stopLoop(); updateDisplay();
+      gameOver = true; stopLoop(); updateDisplay(); playGameOver();
       const msgs = reason === 'checkmate' ? CHECKMATE_MSGS : TIMEOUT_MSGS;
       const msg = msgs[Math.floor(Math.random() * msgs.length)];
       const winnerName = loser === 0 ? 'Black' : 'White';
@@ -3116,7 +3245,7 @@
     }
 
     function declareDraw() {
-      gameOver = true; stopLoop(); updateDisplay();
+      gameOver = true; stopLoop(); updateDisplay(); playGameOver();
       const msg = DRAW_MSGS[Math.floor(Math.random() * DRAW_MSGS.length)];
       statusBar.textContent = 'Game drawn!';
 
@@ -3180,10 +3309,12 @@
     }
 
     document.getElementById('pa-skip').addEventListener('click', () => {
+      playClick();
       currentWhitePlayer = null; currentBlackPlayer = null;
       switchView(paEl, cvEl, () => { setBattleMode(battleMode); reset(); });
     });
     document.getElementById('pa-confirm').addEventListener('click', () => {
+      playClick();
       currentWhitePlayer = selectedWhite;
       currentBlackPlayer = selectedBlack;
       switchView(paEl, cvEl, () => { setBattleMode(battleMode); reset(); });
@@ -3244,9 +3375,10 @@
       decelStep();
     }
 
-    document.getElementById('opening-start-btn').addEventListener('click', stopCarousel);
+    document.getElementById('opening-start-btn').addEventListener('click', () => { playClick(); stopCarousel(); });
 
     document.getElementById('opening-back').addEventListener('click', () => {
+      playClick();
       clearTimeout(carouselTimer); carouselPhase = 'idle';
       switchView(openingEl, homeEl);
     });
@@ -3271,11 +3403,13 @@
     }
 
     document.getElementById('op-new-openings').addEventListener('click', () => {
+      playClick();
       opResultModal.classList.remove('show');
       carouselEnter();
     });
 
     document.getElementById('op-start-game').addEventListener('click', () => {
+      playClick();
       opResultModal.classList.remove('show');
       const wo = OPENINGS[opWhiteIdx], bo = OPENINGS[opBlackIdx];
       activeOpening = {
@@ -3362,7 +3496,7 @@
       });
     }
 
-    document.getElementById('rec-add-btn').addEventListener('click', addPlayer);
+    document.getElementById('rec-add-btn').addEventListener('click', () => { playClick(); addPlayer(); });
     document.getElementById('rec-name-input').addEventListener('keydown', e => { if (e.key === 'Enter') addPlayer(); });
     function addPlayer() {
       const input = document.getElementById('rec-name-input');
@@ -3375,7 +3509,7 @@
       renderRecordsScreen();
     }
 
-    document.getElementById('records-back').addEventListener('click', () => switchView(recordsEl, homeEl));
+    document.getElementById('records-back').addEventListener('click', () => { playClick(); switchView(recordsEl, homeEl); });
     document.getElementById('records-clear').addEventListener('click', () => {
       if (!confirm('Clear all records and ELO ratings? This cannot be undone.')) return;
       localStorage.removeItem('ct-records');
@@ -3384,8 +3518,9 @@
     });
 
     /* ── Battle Chess ──────────────────────────────────────────────────────── */
-    document.getElementById('battle-back').addEventListener('click', () => switchView(battleIntroEl, homeEl));
+    document.getElementById('battle-back').addEventListener('click', () => { playClick(); switchView(battleIntroEl, homeEl); });
     document.getElementById('battle-start-btn').addEventListener('click', () => {
+      playClick();
       battleMode = true;
       switchView(battleIntroEl, tsEl);
     });
@@ -3425,6 +3560,7 @@
     }
 
     document.getElementById('battle-overlay-ok').addEventListener('click', () => {
+      playClick();
       battleOverlay.classList.remove('show');
     });
     battleOverlay.addEventListener('click', e => {
@@ -3438,6 +3574,7 @@
         if (type === 'splash') splashUsed[playerIdx] = true;
         else ghostUsed[playerIdx] = true;
         updateBattleButtons();
+        playBattleAbility();
         showBattleOverlay(playerIdx, type);
       });
     }
@@ -3454,17 +3591,19 @@
 
     /* ── Home screen ───────────────────────────────────────────────────────── */
     document.getElementById('home-clock').addEventListener('click', () => {
+      playClick();
       setBattleMode(false);
       switchView(homeEl, tsEl);
     });
-    document.getElementById('home-openings').addEventListener('click', () => switchView(homeEl, openingEl, carouselEnter));
-    document.getElementById('home-battle').addEventListener('click', () => switchView(homeEl, battleIntroEl));
+    document.getElementById('home-openings').addEventListener('click', () => { playClick(); switchView(homeEl, openingEl, carouselEnter); });
+    document.getElementById('home-battle').addEventListener('click', () => { playClick(); switchView(homeEl, battleIntroEl); });
     document.getElementById('home-records').addEventListener('click', () => {
+      playClick();
       renderRecordsScreen();
       switchView(homeEl, recordsEl);
     });
 
-    document.getElementById('ts-back').addEventListener('click', () => switchView(tsEl, homeEl));
+    document.getElementById('ts-back').addEventListener('click', () => { playClick(); switchView(tsEl, homeEl); });
 
     /* ── Custom time modal ─────────────────────────────────────────────────── */
     const stepVals = { 'w-min': 5, 'w-inc': 0, 'b-min': 5, 'b-inc': 0 };
@@ -3511,8 +3650,9 @@
       }
     });
 
-    document.getElementById('modal-cancel').addEventListener('click', () => modal.classList.remove('show'));
+    document.getElementById('modal-cancel').addEventListener('click', () => { playClick(); modal.classList.remove('show'); });
     document.getElementById('modal-ok').addEventListener('click', () => {
+      playClick();
       baseTimes = [stepVals['w-min'] * 60, stepVals['b-min'] * 60];
       increments = [stepVals['w-inc'], stepVals['b-inc']];
       modal.classList.remove('show');
