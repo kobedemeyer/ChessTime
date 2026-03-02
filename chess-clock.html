@@ -2787,93 +2787,106 @@
     function playClockSwitch() {
       if (soundMuted) return;
       const ctx = getAudio(), t = ctx.currentTime;
-      // Sharp click via short noise burst
-      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
+      // Mechanical chess clock "thunk" — low-frequency knock with filtered noise
+      const osc = ctx.createOscillator(); osc.type = 'sine';
+      osc.frequency.setValueAtTime(180, t); osc.frequency.exponentialRampToValueAtTime(60, t + 0.06);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.07);
+      // Subtle mechanical rattle
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.03, ctx.sampleRate);
       const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.008));
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.004));
       const noise = ctx.createBufferSource(); noise.buffer = buf;
-      const nGain = ctx.createGain(); nGain.gain.setValueAtTime(0.15, t);
-      noise.connect(nGain).connect(ctx.destination); noise.start(t); noise.stop(t + 0.04);
-      // Mid-frequency ping
-      const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(800, t);
-      const g = ctx.createGain(); g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.08);
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1200;
+      const nGain = ctx.createGain(); nGain.gain.setValueAtTime(0.08, t);
+      noise.connect(lp).connect(nGain).connect(ctx.destination); noise.start(t); noise.stop(t + 0.03);
     }
 
     function playGameStart() {
       if (soundMuted) return;
       const ctx = getAudio(), t = ctx.currentTime;
+      // Gentle warm tone
       const osc = ctx.createOscillator(); osc.type = 'sine';
-      osc.frequency.setValueAtTime(500, t); osc.frequency.exponentialRampToValueAtTime(1200, t + 0.15);
-      const g = ctx.createGain(); g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.2);
+      osc.frequency.setValueAtTime(330, t); osc.frequency.exponentialRampToValueAtTime(440, t + 0.2);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.1, t);
+      g.gain.linearRampToValueAtTime(0.12, t + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.35);
     }
 
     function playClick() {
       if (soundMuted) return;
       const ctx = getAudio(), t = ctx.currentTime;
-      const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(600, t);
-      const g = ctx.createGain(); g.gain.setValueAtTime(0.06, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+      // Soft woody tap
+      const osc = ctx.createOscillator(); osc.type = 'sine';
+      osc.frequency.setValueAtTime(300, t); osc.frequency.exponentialRampToValueAtTime(150, t + 0.03);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
       osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.04);
     }
 
     function playPause() {
       if (soundMuted) return;
       const ctx = getAudio(), t = ctx.currentTime;
+      // Soft descending hum
       const osc = ctx.createOscillator(); osc.type = 'sine';
-      osc.frequency.setValueAtTime(500, t); osc.frequency.exponentialRampToValueAtTime(300, t + 0.15);
-      const g = ctx.createGain(); g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.18);
+      osc.frequency.setValueAtTime(380, t); osc.frequency.exponentialRampToValueAtTime(260, t + 0.2);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.07, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.25);
     }
 
     function playResume() {
       if (soundMuted) return;
       const ctx = getAudio(), t = ctx.currentTime;
+      // Soft ascending hum
       const osc = ctx.createOscillator(); osc.type = 'sine';
-      osc.frequency.setValueAtTime(300, t); osc.frequency.exponentialRampToValueAtTime(500, t + 0.15);
-      const g = ctx.createGain(); g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.18);
+      osc.frequency.setValueAtTime(260, t); osc.frequency.exponentialRampToValueAtTime(380, t + 0.2);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.07, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.25);
     }
 
     function playGameOver() {
       if (soundMuted) return;
       const ctx = getAudio(), t = ctx.currentTime;
-      [700, 550, 400, 280].forEach((freq, i) => {
-        const osc = ctx.createOscillator(); osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, t + i * 0.18);
+      // Gentle descending chime
+      [440, 370, 310, 260].forEach((freq, i) => {
+        const osc = ctx.createOscillator(); osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t + i * 0.25);
         const g = ctx.createGain();
-        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.15, t + i * 0.18);
-        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.18 + 0.25);
-        osc.connect(g).connect(ctx.destination); osc.start(t + i * 0.18); osc.stop(t + i * 0.18 + 0.25);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.08, t + i * 0.25);
+        g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.25 + 0.4);
+        osc.connect(g).connect(ctx.destination); osc.start(t + i * 0.25); osc.stop(t + i * 0.25 + 0.4);
       });
     }
 
     function playBattleAbility() {
       if (soundMuted) return;
       const ctx = getAudio(), t = ctx.currentTime;
-      // Swoosh: noise with bandpass sweep
-      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+      // Gentle whoosh — filtered noise sweep
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.25, ctx.sampleRate);
       const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.12));
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.1));
       const noise = ctx.createBufferSource(); noise.buffer = buf;
-      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 3;
-      bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(2000, t + 0.2);
-      const g = ctx.createGain(); g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-      noise.connect(bp).connect(g).connect(ctx.destination); noise.start(t); noise.stop(t + 0.3);
-      // Rising ping
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 2;
+      bp.frequency.setValueAtTime(200, t); bp.frequency.exponentialRampToValueAtTime(800, t + 0.2);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      noise.connect(bp).connect(g).connect(ctx.destination); noise.start(t); noise.stop(t + 0.25);
+      // Warm rising tone
       const osc = ctx.createOscillator(); osc.type = 'sine';
-      osc.frequency.setValueAtTime(400, t); osc.frequency.exponentialRampToValueAtTime(1600, t + 0.2);
-      const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.1, t + 0.05); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-      osc.connect(g2).connect(ctx.destination); osc.start(t); osc.stop(t + 0.25);
+      osc.frequency.setValueAtTime(280, t + 0.03); osc.frequency.exponentialRampToValueAtTime(560, t + 0.18);
+      const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.06, t + 0.03); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      osc.connect(g2).connect(ctx.destination); osc.start(t + 0.03); osc.stop(t + 0.22);
     }
 
     function playVictoryChord() {
       if (soundMuted) return;
       const ctx = getAudio(), t = ctx.currentTime;
-      [523, 659, 784].forEach(freq => {
+      // Warm major chord, soft and pleasant
+      [262, 330, 392].forEach(freq => {
         const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.setValueAtTime(freq, t);
-        const g = ctx.createGain(); g.gain.setValueAtTime(0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-        osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.4);
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.06, t);
+        g.gain.linearRampToValueAtTime(0.08, t + 0.1);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+        osc.connect(g).connect(ctx.destination); osc.start(t); osc.stop(t + 0.6);
       });
     }
 
