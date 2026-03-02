@@ -1,0 +1,3536 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Chess Clock</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e0c03">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="ChessTime">
+  <link rel="apple-touch-icon" href="icon-apple.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+      background: #1e0c03;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      padding-top: env(safe-area-inset-top);
+    }
+
+    /* ══════════════════════════════════════
+       INTRO
+    ══════════════════════════════════════ */
+    #intro {
+      position: fixed;
+      inset: 0;
+      background: #1e0c03;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+    }
+
+    #intro-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: rise-and-clear 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+    }
+
+    .intro-word {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(88px, 20vw, 180px);
+      color: #c89858;
+      letter-spacing: 2px;
+      line-height: 0.88;
+      display: block;
+      transform: scaleX(1.4);
+    }
+
+    @keyframes rise-and-clear {
+      from {
+        opacity: 0;
+        filter: blur(48px);
+        transform: translateY(180px);
+      }
+
+      8% {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 1;
+        filter: blur(0px);
+        transform: translateY(0px);
+      }
+    }
+
+    /* ══════════════════════════════════════
+       HOME SCREEN
+    ══════════════════════════════════════ */
+    #home-screen {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 24px;
+      gap: 20px;
+    }
+
+    .home-title {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .home-title-word {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(56px, 14vw, 130px);
+      color: #c89858;
+      letter-spacing: 2px;
+      line-height: 0.88;
+      transform: scaleX(1.4);
+    }
+
+    .home-tiles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .home-tile {
+      background: #2c1a08;
+      border: 1px solid #4c2c14;
+      border-radius: 16px;
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s, border-color 0.15s, transform 0.12s;
+      overflow: hidden;
+    }
+
+    .home-tile:hover {
+      background: #3c2810;
+      border-color: #c8860a;
+      transform: scale(1.02);
+    }
+
+    .home-tile-icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .home-tile-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      color: #c89858;
+      letter-spacing: 4px;
+    }
+
+    .home-tile-name--stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 0.9;
+    }
+
+    .home-tile-desc {
+      font-size: 10px;
+      font-weight: 700;
+      color: #906030;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      line-height: 1.5;
+    }
+
+    /* ══════════════════════════════════════
+       TIME CONTROL SELECTOR
+    ══════════════════════════════════════ */
+    #time-select {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 24px 0;
+      gap: 24px;
+      min-height: 0;
+    }
+
+    .ts-header {
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .ts-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(44px, 8vw, 96px);
+      color: #c89858;
+      letter-spacing: 10px;
+      line-height: 1;
+    }
+
+    .ts-subtitle {
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #906030;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .ts-back {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #6a3c1c;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .ts-back:hover {
+      color: #c89858;
+    }
+
+    .ts-scroll {
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 36px;
+    }
+
+    .ts-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      width: 100%;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .ts-tile {
+      background: #2c1a08;
+      border: 1px solid #4c2c14;
+      border-radius: 12px;
+      padding: 28px 16px 22px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.12s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ts-tile:hover {
+      background: #3c2810;
+      border-color: #c8860a;
+      transform: translateY(-3px);
+    }
+
+    .ts-tile-time {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(38px, 5vw, 60px);
+      color: #c89858;
+      letter-spacing: 3px;
+      line-height: 1;
+    }
+
+    .ts-tile-category {
+      font-size: 10px;
+      font-weight: 800;
+      color: #906030;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+    }
+
+    .ts-tile.custom {
+      border-style: dashed;
+      border-color: #402810;
+      grid-column: span 2;
+    }
+
+    .ts-tile.custom .ts-tile-time {
+      font-size: 36px;
+      color: #a06830;
+      letter-spacing: 1px;
+      display: block;
+      transform: scaleX(1.22);
+    }
+
+    .ts-tile.custom:hover .ts-tile-time {
+      color: #c89858;
+    }
+
+    /* ══════════════════════════════════════
+       PLAYER ASSIGN
+    ══════════════════════════════════════ */
+    #player-assign {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      gap: 28px;
+    }
+
+    .pa-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(36px, 8vw, 72px);
+      color: #c89858;
+      letter-spacing: 8px;
+      text-align: center;
+    }
+
+    .pa-sub {
+      font-size: 11px;
+      font-weight: 700;
+      color: #906030;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .pa-sides {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .pa-side {
+      background: #2c1a08;
+      border: 1px solid #4c2c14;
+      border-radius: 12px;
+      padding: 18px 16px;
+    }
+
+    .pa-color {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .pa-color.white {
+      color: #c89858;
+    }
+
+    .pa-color.black {
+      color: #906030;
+    }
+
+    .pa-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pa-btn {
+      padding: 7px 16px;
+      background: #1e0c03;
+      border: 1px solid #4c2c14;
+      border-radius: 20px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: #906030;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pa-btn:hover:not(:disabled) {
+      background: #3c2810;
+      color: #c89858;
+      border-color: #7a4c18;
+    }
+
+    .pa-btn.selected {
+      background: #c8860a;
+      border-color: #c8860a;
+      color: #080400;
+    }
+
+    .pa-btn:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    .pa-actions {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    #pa-skip {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: 1px solid #4c2c14;
+      border-radius: 10px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #906030;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    #pa-skip:hover {
+      background: #2c1808;
+      color: #c89858;
+    }
+
+    #pa-confirm {
+      flex: 2;
+      padding: 12px;
+      background: #c8860a;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #080400;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    #pa-confirm:hover {
+      background: #e09a14;
+    }
+
+    /* ══════════════════════════════════════
+       CLOCK VIEW
+    ══════════════════════════════════════ */
+    #clock-view {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+    }
+
+    #clock-toolbar {
+      background: #160a02;
+      border-bottom: 2px solid #2c1808;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tb-btn {
+      padding: 7px 18px;
+      border: 1px solid #4c2c14;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Barlow', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: #2c1808;
+      color: #906030;
+      transition: all 0.15s;
+    }
+
+    .tb-btn:hover {
+      background: #3c2810;
+      color: #c89858;
+      border-color: #7a4c18;
+    }
+
+    .tb-btn:disabled {
+      background: #200e04;
+      color: #4a2c14;
+      cursor: not-allowed;
+      border-color: #2c1a08;
+    }
+
+    #pause-btn {
+      background: #c8860a;
+      color: #0a0400;
+      border-color: #c8860a;
+    }
+
+    #pause-btn:hover {
+      background: #e09a14;
+      border-color: #e09a14;
+      color: #0a0400;
+    }
+
+    #pause-btn:disabled {
+      background: #2c1808;
+      color: #4a2c14;
+      border-color: #2c1a08;
+      cursor: not-allowed;
+    }
+
+    #checkmate-btn {
+      background: transparent;
+      color: #c89858;
+      border-color: #4a2c10;
+      font-size: 11px;
+    }
+
+    #checkmate-btn:hover:not(:disabled) {
+      background: #2c1808;
+      border-color: #c8860a;
+    }
+
+    #checkmate-btn:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    /* ── Checkmate modal ── */
+    #checkmate-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #checkmate-modal.show {
+      display: flex;
+    }
+
+    .cm-box {
+      background: #1e0c03;
+      border: 1px solid #4a2c10;
+      border-radius: 16px;
+      padding: 32px 28px;
+      text-align: center;
+      max-width: 340px;
+      width: 90%;
+    }
+
+    .cm-title {
+      font-family: 'Bebas Neue', Impact, sans-serif;
+      font-size: 22px;
+      color: #c89858;
+      letter-spacing: 2px;
+      margin-bottom: 24px;
+    }
+
+    .cm-buttons {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .cm-btn {
+      flex: 1;
+      font-family: 'Bebas Neue', Impact, sans-serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      padding: 14px 12px;
+      border: 2px solid #4a2c10;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #140800;
+      color: #c89858;
+    }
+
+    .cm-btn:hover {
+      border-color: #c8860a;
+      transform: translateY(-2px);
+    }
+
+    .cm-btn.cm-white:hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+
+    .cm-btn.cm-black:hover {
+      background: rgba(200,134,10,0.12);
+      color: #c8860a;
+    }
+
+    .cm-btn.cm-draw {
+      width: 100%;
+      font-size: 15px;
+      padding: 10px;
+      opacity: 0.6;
+      margin-bottom: 16px;
+    }
+
+    .cm-btn.cm-draw:hover {
+      opacity: 1;
+    }
+
+    .cm-cancel {
+      background: none;
+      border: none;
+      color: #5c3820;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      padding: 6px 16px;
+    }
+
+    .cm-cancel:hover {
+      color: #c89858;
+    }
+
+    #clock-area {
+      flex: 1;
+      display: flex;
+    }
+
+    .clock-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      padding: 30px 20px;
+      transition: background 0.2s;
+    }
+
+    #p1 {
+      background: #b88848;
+    }
+
+    #p1.active {
+      background: #cc9a54;
+      box-shadow: inset 0 0 0 5px #c8860a;
+    }
+
+    #p1.inactive {
+      background: #8a6030;
+    }
+
+    #p1 .player-label {
+      color: #1e0e00;
+    }
+
+    #p1 .time-display {
+      color: #100800;
+    }
+
+    #p1.inactive .player-label {
+      color: #4a2c18;
+    }
+
+    #p1.inactive .time-display {
+      color: #2e1c08;
+    }
+
+    #p2 {
+      background: #3e2010;
+    }
+
+    #p2.active {
+      background: #542c1a;
+      box-shadow: inset 0 0 0 5px #c8860a;
+    }
+
+    #p2.inactive {
+      background: #2e1a0c;
+    }
+
+    #p2 .player-label {
+      color: #9a6838;
+    }
+
+    #p2 .time-display {
+      color: #c89858;
+    }
+
+    #p2.active .player-label {
+      color: #c09050;
+    }
+
+    #p2.active .time-display {
+      color: #e0b878;
+    }
+
+    #p2.inactive .player-label {
+      color: #7a4c28;
+    }
+
+    #p2.inactive .time-display {
+      color: #9a6430;
+    }
+
+    .divider {
+      width: 5px;
+      background: #120800;
+      flex-shrink: 0;
+    }
+
+    .player-label {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 6px;
+      margin-bottom: 8px;
+      opacity: 0.65;
+    }
+
+    .time-display {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(80px, 18vw, 230px);
+      letter-spacing: 6px;
+      line-height: 0.88;
+      transition: color 0.3s;
+    }
+
+    .time-display.danger {
+      color: #cc2000 !important;
+      animation: danger-pulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes danger-pulse {
+      from {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 0.25;
+      }
+    }
+
+    .move-count {
+      margin-top: 16px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.3;
+      display: block;
+      transform: scaleX(1.22);
+    }
+
+    .inc-badge {
+      margin-top: 5px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.3;
+    }
+
+    .opening-moves {
+      display: none;
+      margin-top: 10px;
+      gap: 6px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .opening-moves.visible {
+      display: flex;
+    }
+
+    .opening-moves .op-name {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      opacity: 0.35;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 2px;
+    }
+
+    .opening-moves .op-move {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.06);
+      opacity: 0.3;
+      transition: all 0.3s ease;
+    }
+
+    .opening-moves .op-move.current {
+      opacity: 1;
+      background: rgba(61,220,132,0.15);
+      color: #3ddc84;
+      transform: scale(1.1);
+    }
+
+    .opening-moves .op-move.done {
+      opacity: 0.15;
+      text-decoration: line-through;
+    }
+
+    .active-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #3ddc84;
+      margin-top: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .clock-panel.active .active-dot {
+      opacity: 1;
+      animation: dot-glow 0.9s ease-in-out infinite alternate;
+    }
+
+    @keyframes dot-glow {
+      from {
+        box-shadow: 0 0 4px #3ddc84;
+      }
+
+      to {
+        box-shadow: 0 0 14px #3ddc84;
+      }
+    }
+
+    .start-hint {
+      position: absolute;
+      bottom: 24px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: 0.25;
+    }
+
+    #p1 .start-hint {
+      color: #100800;
+    }
+
+    #p2 .start-hint {
+      color: #c89858;
+    }
+
+    #status-bar {
+      background: #120800;
+      border-top: 1px solid #2c1808;
+      padding: 7px 20px;
+      padding-bottom: max(7px, env(safe-area-inset-bottom));
+      font-size: 10px;
+      font-weight: 800;
+      color: #5c3820;
+      text-align: center;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+    }
+
+    /* ══════════════════════════════════════
+       GAME OVER
+    ══════════════════════════════════════ */
+    #gameover-screen {
+      position: fixed;
+      inset: 0;
+      background: #1e0c03;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 250;
+      gap: 48px;
+      padding: 0 28px;
+    }
+
+    #gameover-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+    }
+
+    .gameover-word {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(56px, 13vw, 130px);
+      color: #c89858;
+      letter-spacing: 6px;
+      line-height: 0.88;
+      display: block;
+      width: 100%;
+    }
+
+    .gameover-word:empty {
+      display: none;
+    }
+
+    #gameover-winner {
+      margin-top: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #906030;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+    }
+
+    #gameover-recorded {
+      margin-top: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #5c3820;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      display: none;
+    }
+
+    #gameover-actions {
+      display: flex;
+      gap: 14px;
+      opacity: 0;
+    }
+
+    .gameover-btn {
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    #gameover-again {
+      background: #c8860a;
+      color: #080400;
+      border: none;
+    }
+
+    #gameover-again:hover {
+      background: #e09a14;
+    }
+
+    #gameover-change {
+      background: transparent;
+      color: #906030;
+      border: 1px solid #4a2c14;
+    }
+
+    #gameover-change:hover {
+      background: #2c1808;
+      color: #c89858;
+    }
+
+    @keyframes gameover-fade {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ══════════════════════════════════════
+       OPENING CAROUSEL SCREEN
+    ══════════════════════════════════════ */
+    #opening-screen {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+    }
+
+    #opening-toolbar {
+      background: #160a02;
+      border-bottom: 2px solid #2c1808;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .opening-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      color: #c89858;
+      letter-spacing: 6px;
+    }
+
+    #opening-carousel-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 20px 32px;
+      gap: 28px;
+    }
+
+    .carousel-cards {
+      display: flex;
+      gap: 14px;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .carousel-card {
+      flex: 1;
+      background: #2c1a08;
+      border: 1px solid #4c2c14;
+      border-radius: 16px;
+      padding: 32px 16px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      min-height: 140px;
+      justify-content: center;
+    }
+
+    .carousel-color-label {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+    }
+
+    .carousel-color-label.white {
+      color: #c89858;
+    }
+
+    .carousel-color-label.black {
+      color: #906030;
+    }
+
+    .carousel-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(18px, 4.5vw, 28px);
+      color: #c89858;
+      letter-spacing: 2px;
+      line-height: 1.15;
+      text-align: center;
+      transition: opacity 0.06s ease;
+    }
+
+    #opening-start-btn {
+      padding: 16px 48px;
+      background: #c8860a;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #080400;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    #opening-start-btn:hover {
+      background: #e09a14;
+    }
+
+    #opening-start-btn:disabled {
+      background: #4a2c14;
+      color: #2c1808;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .carousel-hint {
+      font-size: 10px;
+      font-weight: 700;
+      color: #4a2c14;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ══════════════════════════════════════
+       RECORDS SCREEN
+    ══════════════════════════════════════ */
+    #records-screen {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    #records-toolbar {
+      background: #160a02;
+      border-bottom: 2px solid #2c1808;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .records-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      color: #c89858;
+      letter-spacing: 6px;
+    }
+
+    #records-scroll {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 24px 20px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-height: 0;
+    }
+
+    .rec-section-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: #6a3c1c;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .rec-add-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    #rec-name-input {
+      flex: 1;
+      background: #2c1a08;
+      border: 1px solid #4c2c14;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: #c89858;
+      outline: none;
+      transition: border-color 0.15s;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    #rec-name-input::placeholder {
+      color: #4a2c14;
+    }
+
+    #rec-name-input:focus {
+      border-color: #7a4c18;
+    }
+
+    #rec-add-btn {
+      padding: 12px 20px;
+      background: #c8860a;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #080400;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    #rec-add-btn:hover {
+      background: #e09a14;
+    }
+
+    #rec-players {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 24px;
+    }
+
+    .rec-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px 6px 14px;
+      background: #2c1a08;
+      border: 1px solid #4c2c14;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #c89858;
+    }
+
+    .rec-chip-remove {
+      background: none;
+      border: none;
+      color: #6a3c1c;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      transition: color 0.1s;
+    }
+
+    .rec-chip-remove:hover {
+      color: #c89858;
+    }
+
+    #rec-records {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .rec-matchup {
+      background: #2c1a08;
+      border: 1px solid #4c2c14;
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .rec-player-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      color: #c89858;
+      letter-spacing: 2px;
+      min-width: 80px;
+    }
+
+    .rec-player-name.loser {
+      color: #6a3c1c;
+    }
+
+    .rec-score {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      color: #c89858;
+      letter-spacing: 4px;
+    }
+
+    .rec-vs {
+      font-size: 10px;
+      font-weight: 800;
+      color: #5c3820;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .rec-empty {
+      font-size: 11px;
+      font-weight: 700;
+      color: #4a2c14;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .rec-lb-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #2c1a08;
+      border: 1px solid #4c2c14;
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+
+    .rec-lb-rank {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      color: #5c3820;
+      width: 24px;
+      flex-shrink: 0;
+    }
+
+    .rec-lb-rank.gold {
+      color: #c8a020;
+    }
+
+    .rec-lb-rank.silver {
+      color: #909090;
+    }
+
+    .rec-lb-rank.bronze {
+      color: #a06030;
+    }
+
+    .rec-lb-name {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 700;
+      color: #c89858;
+      letter-spacing: 1px;
+    }
+
+    .rec-lb-elo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      color: #c89858;
+      letter-spacing: 2px;
+    }
+
+    .rec-lb-trend {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      width: 36px;
+      text-align: right;
+    }
+
+    .rec-lb-trend.up {
+      color: #3ddc84;
+    }
+
+    .rec-lb-trend.down {
+      color: #cc4040;
+    }
+
+    /* ══════════════════════════════════════
+       OPENING RESULT MODAL
+    ══════════════════════════════════════ */
+    #op-result-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      align-items: center;
+      justify-content: center;
+      z-index: 220;
+      padding: 24px;
+    }
+
+    #op-result-modal.show {
+      display: flex;
+    }
+
+    .op-result-box {
+      background: #1e1008;
+      border: 1px solid #5a3018;
+      border-radius: 16px;
+      padding: 28px 24px 24px;
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85);
+    }
+
+    .op-result-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      color: #c89858;
+      letter-spacing: 6px;
+      text-align: center;
+    }
+
+    .op-result-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .op-result-row {
+      background: #2c1a08;
+      border: 1px solid #4c2c14;
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .op-result-color {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .op-result-color.white {
+      color: #c89858;
+    }
+
+    .op-result-color.black {
+      color: #906030;
+    }
+
+    .op-result-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      color: #c89858;
+      letter-spacing: 2px;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .op-result-moves {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+    }
+
+    .op-result-move {
+      display: flex;
+      align-items: baseline;
+      gap: 3px;
+    }
+
+    .op-result-move-num {
+      font-size: 9px;
+      font-weight: 800;
+      color: #5c3820;
+    }
+
+    .op-result-move-san {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      color: #c89858;
+      letter-spacing: 1px;
+    }
+
+    .op-result-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #op-start-game {
+      padding: 14px 0;
+      background: #c8860a;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #080400;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    #op-start-game:hover {
+      background: #e09a14;
+    }
+
+    #op-new-openings {
+      padding: 12px 0;
+      background: transparent;
+      border: 1px solid #4c2c14;
+      border-radius: 10px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #906030;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    #op-new-openings:hover {
+      background: #2c1808;
+      color: #c89858;
+      border-color: #7a4c18;
+    }
+
+    /* ══════════════════════════════════════
+       CUSTOM TIME MODAL
+    ══════════════════════════════════════ */
+    #modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.88);
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    #modal.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #1e1008;
+      border: 1px solid #5a3018;
+      border-radius: 14px;
+      padding: 32px;
+      min-width: min(320px, 88vw);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8);
+    }
+
+    .modal-box h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      color: #c89858;
+      margin-bottom: 24px;
+      letter-spacing: 5px;
+    }
+
+    .modal-cols {
+      display: flex;
+    }
+
+    .modal-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal-col:first-child {
+      padding-right: 22px;
+    }
+
+    .modal-col:last-child {
+      padding-left: 22px;
+    }
+
+    .modal-col-divider {
+      width: 1px;
+      background: #402810;
+      flex-shrink: 0;
+    }
+
+    .col-header {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #402810;
+    }
+
+    .col-header.white {
+      color: #c89858;
+    }
+
+    .col-header.black {
+      color: #906030;
+    }
+
+    .modal-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .modal-field label {
+      font-size: 10px;
+      font-weight: 800;
+      color: #6a3c1c;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .stepper {
+      display: flex;
+      align-items: center;
+      background: #120800;
+      border: 1px solid #402810;
+      border-radius: 8px;
+      transition: opacity 0.2s;
+    }
+
+    .stepper.disabled {
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    .step-btn {
+      background: #2c1808;
+      border: none;
+      color: #906030;
+      font-size: 15px;
+      padding: 8px 13px;
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+      flex-shrink: 0;
+      line-height: 1;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .step-btn:first-child {
+      border-radius: 7px 0 0 7px;
+      border-right: 1px solid #402810;
+    }
+
+    .step-btn:last-child {
+      border-radius: 0 7px 7px 0;
+      border-left: 1px solid #402810;
+    }
+
+    .step-btn:hover,
+    .step-btn:active {
+      background: #402810;
+      color: #c89858;
+    }
+
+    .step-val {
+      flex: 1;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 30px;
+      color: #c89858;
+      letter-spacing: 2px;
+      text-align: center;
+      padding: 4px 0;
+    }
+
+    .modal-sync {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: #2c1808;
+      border: 1px solid #402810;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .modal-sync input[type="checkbox"] {
+      width: 26px;
+      height: 26px;
+      accent-color: #c8860a;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .modal-sync label {
+      font-size: 13px;
+      font-weight: 800;
+      color: #906030;
+      cursor: pointer;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+      justify-content: flex-end;
+    }
+
+    .modal-actions button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    #modal-ok {
+      background: #c8860a;
+      color: #080400;
+    }
+
+    #modal-ok:hover {
+      background: #e09a14;
+    }
+
+    #modal-cancel {
+      background: #2c1808;
+      color: #906030;
+      border: 1px solid #402810;
+    }
+
+    #modal-cancel:hover {
+      background: #3c2810;
+      color: #c89858;
+    }
+
+    /* ══════════════════════════════════════
+       BATTLE CHESS
+    ══════════════════════════════════════ */
+    #battle-intro {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    #battle-toolbar {
+      background: #160a02;
+      border-bottom: 2px solid #2c1808;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .battle-screen-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      color: #c89858;
+      letter-spacing: 6px;
+    }
+
+    #battle-scroll {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 24px 20px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      min-height: 0;
+    }
+
+    .battle-ability-card {
+      background: #2c1a08;
+      border: 1px solid #4c2c14;
+      border-radius: 14px;
+      padding: 22px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .battle-ability-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .battle-ability-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .battle-ability-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      color: #c89858;
+      letter-spacing: 3px;
+    }
+
+    .battle-ability-desc {
+      font-size: 12px;
+      font-weight: 600;
+      color: #906030;
+      letter-spacing: 1px;
+      line-height: 1.7;
+    }
+
+    .battle-ability-note {
+      font-size: 11px;
+      font-weight: 800;
+      color: #7a4c28;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ── Chess.com-style Demo Boards ── */
+    .demo-board {
+      display: grid;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.65);
+      border-radius: 3px;
+    }
+
+    .demo-board.b5 {
+      grid-template-columns: repeat(5, 40px);
+    }
+
+    .demo-board.b5x4 {
+      grid-template-columns: repeat(5, 40px);
+    }
+
+    .sq {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 23px;
+      position: relative;
+    }
+
+    .sq.l {
+      background: #eeeed2;
+    }
+
+    .sq.d {
+      background: #769656;
+    }
+
+    .piece {
+      line-height: 1;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .piece.w {
+      color: #fff;
+      -webkit-text-stroke: 1.5px #333;
+    }
+
+    .piece.b {
+      color: #302e2c;
+      -webkit-text-stroke: 1px rgba(255, 255, 255, 0.28);
+    }
+
+    /* Splash */
+    .sq.spl-src {
+      animation: spl-src 1.7s ease-in-out infinite;
+    }
+
+    .sq.spl-hit {
+      animation: spl-hit 1.7s ease-in-out 0.45s infinite;
+    }
+
+    .sq.spl-king {
+      animation: spl-hit 1.7s ease-in-out 0.45s infinite;
+    }
+
+    @keyframes spl-src {
+
+      0%,
+      100% {
+        box-shadow: none;
+      }
+
+      35%,
+      65% {
+        box-shadow: inset 0 0 0 40px rgba(240, 200, 0, 0.48);
+      }
+    }
+
+    @keyframes spl-hit {
+
+      0%,
+      18% {
+        box-shadow: none;
+      }
+
+      55%,
+      80% {
+        box-shadow: inset 0 0 0 40px rgba(210, 35, 35, 0.78);
+      }
+
+      100% {
+        box-shadow: none;
+      }
+    }
+
+    .king-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #3ddc84;
+      font-size: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-weight: 900;
+      z-index: 2;
+      animation: badge-show 1.7s ease-in-out 0.45s infinite;
+    }
+
+    @keyframes badge-show {
+
+      0%,
+      48% {
+        transform: scale(0);
+        opacity: 0;
+      }
+
+      68%,
+      86% {
+        transform: scale(1.15);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(0);
+        opacity: 0;
+      }
+    }
+
+    /* Ghost move */
+    .sq.gh-enemy {
+      animation: gh-dim 2.6s ease-in-out infinite;
+    }
+
+    .sq.gh-land {
+      animation: gh-land 2.6s ease-in-out infinite;
+    }
+
+    @keyframes gh-dim {
+
+      0%,
+      28% {
+        opacity: 1
+      }
+
+      48%,
+      68% {
+        opacity: 0.1
+      }
+
+      88%,
+      100% {
+        opacity: 1
+      }
+    }
+
+    @keyframes gh-land {
+
+      0%,
+      52% {
+        box-shadow: none;
+      }
+
+      68%,
+      86% {
+        box-shadow: inset 0 0 0 40px rgba(61, 220, 132, 0.52);
+      }
+
+      100% {
+        box-shadow: none;
+      }
+    }
+
+    .ghost-mover {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 23px;
+      pointer-events: none;
+      z-index: 3;
+      color: #fff;
+      -webkit-text-stroke: 1.5px #333;
+      animation: gh-ride 2.6s ease-in-out infinite;
+    }
+
+    @keyframes gh-ride {
+
+      0%,
+      14% {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+      }
+
+      46% {
+        transform: translate(calc(-50% + 40px), -50%);
+        opacity: 0.15;
+      }
+
+      58%,
+      100% {
+        transform: translate(calc(-50% + 80px), -50%);
+        opacity: 1;
+      }
+    }
+
+    #battle-start-btn {
+      padding: 16px;
+      background: #c8860a;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #080400;
+      cursor: pointer;
+      transition: background 0.15s;
+      width: 100%;
+    }
+
+    #battle-start-btn:hover {
+      background: #e09a14;
+    }
+
+    /* Battle buttons inside clock panels */
+    .battle-actions {
+      display: none;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .battle-active .battle-actions {
+      display: flex;
+    }
+
+    .battle-atk-btn {
+      flex: 1;
+      padding: 7px 10px;
+      background: #1e0c03;
+      border: 1px solid #4c2c14;
+      border-radius: 20px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .battle-atk-btn:not(:disabled):hover {
+      background: #3c2810;
+    }
+
+    .battle-atk-btn:disabled {
+      opacity: 0.28;
+      cursor: not-allowed;
+    }
+
+    #p1 .battle-atk-btn {
+      color: #5a3010;
+    }
+
+    #p1 .battle-atk-btn:not(:disabled) {
+      color: #1e0e00;
+    }
+
+    #p2 .battle-atk-btn {
+      color: #906030;
+    }
+
+    #p2 .battle-atk-btn:not(:disabled) {
+      color: #c89858;
+    }
+
+    /* Battle attack overlay */
+    #battle-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      align-items: center;
+      justify-content: center;
+      z-index: 260;
+      padding: 24px;
+    }
+
+    #battle-overlay.show {
+      display: flex;
+    }
+
+    .battle-overlay-box {
+      background: #1e1008;
+      border: 1px solid #5a3018;
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.9);
+    }
+
+    .battle-overlay-icon {
+      font-size: 44px;
+      line-height: 1;
+    }
+
+    .battle-overlay-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      color: #c89858;
+      letter-spacing: 4px;
+    }
+
+    .battle-overlay-player {
+      font-size: 11px;
+      font-weight: 800;
+      color: #906030;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .battle-overlay-desc {
+      font-size: 12px;
+      font-weight: 600;
+      color: #906030;
+      letter-spacing: 1px;
+      line-height: 1.7;
+      text-align: center;
+    }
+
+    #battle-overlay-ok {
+      padding: 12px 36px;
+      background: #c8860a;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #080400;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    #battle-overlay-ok:hover {
+      background: #e09a14;
+    }
+
+    /* ══════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════ */
+    @media (max-width: 600px) {
+      .ts-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .ts-tile.custom {
+        grid-column: span 2;
+      }
+
+      #clock-toolbar {
+        padding: 16px 20px;
+      }
+
+      .carousel-cards {
+        flex-direction: column;
+      }
+    }
+
+    @media (orientation: portrait) {
+      #clock-area {
+        flex-direction: column;
+      }
+
+      .divider {
+        width: 100%;
+        height: 5px;
+      }
+
+      #p2 {
+        transform: rotate(180deg);
+      }
+
+      .time-display {
+        font-size: clamp(64px, 28vw, 140px);
+        letter-spacing: 4px;
+      }
+
+      .player-label {
+        letter-spacing: 4px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══ Intro ══ -->
+  <div id="intro">
+    <div id="intro-content">
+      <div class="intro-word">Chess</div>
+      <div class="intro-word">Time</div>
+    </div>
+  </div>
+
+  <!-- ══ Home Screen ══ -->
+  <div id="home-screen">
+    <div class="home-title">
+      <div class="home-title-word">Chess</div>
+      <div class="home-title-word">Time</div>
+    </div>
+    <div class="home-tiles">
+      <div class="home-tile" id="home-clock">
+        <div class="home-tile-icon">⏱</div>
+        <div class="home-tile-name home-tile-name--stack">
+          <span>Chess</span>
+          <span>Clock</span>
+        </div>
+      </div>
+      <div class="home-tile" id="home-records">
+        <div class="home-tile-icon">⚔</div>
+        <div class="home-tile-name">Record</div>
+      </div>
+      <div class="home-tile" id="home-openings">
+        <div class="home-tile-icon">♟</div>
+        <div class="home-tile-name">Random</div>
+      </div>
+      <div class="home-tile" id="home-battle">
+        <div class="home-tile-icon">⚡</div>
+        <div class="home-tile-name">Overkill</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Time Control Selector ══ -->
+  <div id="time-select">
+    <div class="ts-header">
+      <div class="ts-title">ChessTime</div>
+      <div class="ts-subtitle">Select a time control</div>
+      <div class="ts-back" id="ts-back">← Back</div>
+    </div>
+    <div class="ts-scroll">
+      <div class="ts-grid" id="ts-grid"></div>
+    </div>
+  </div>
+
+  <!-- ══ Player Assign ══ -->
+  <div id="player-assign">
+    <div>
+      <div class="pa-title">Who's Playing?</div>
+      <div class="pa-sub">Select a player for each side</div>
+    </div>
+    <div class="pa-sides">
+      <div class="pa-side">
+        <div class="pa-color white">White</div>
+        <div class="pa-btns" id="pa-white-btns"></div>
+      </div>
+      <div class="pa-side">
+        <div class="pa-color black">Black</div>
+        <div class="pa-btns" id="pa-black-btns"></div>
+      </div>
+    </div>
+    <div class="pa-actions">
+      <button id="pa-skip">Play as Guests</button>
+      <button id="pa-confirm">Start Game →</button>
+    </div>
+  </div>
+
+  <!-- ══ Clock View ══ -->
+  <div id="clock-view">
+    <div id="clock-toolbar">
+      <button class="tb-btn" id="change-btn">← Change</button>
+      <div class="toolbar-right">
+        <button class="tb-btn" id="pause-btn" disabled>Pause</button>
+        <button class="tb-btn" id="checkmate-btn" disabled>☆ Checkmate</button>
+        <button class="tb-btn" id="reset-btn">Reset</button>
+      </div>
+    </div>
+    <div id="clock-area">
+      <div class="clock-panel" id="p1">
+        <div class="player-label" id="p1-label">White</div>
+        <div class="time-display" id="p1-time">5:00</div>
+        <div class="active-dot"></div>
+        <div class="inc-badge" id="p1-inc"></div>
+        <div class="move-count" id="p1-moves">Round 0</div>
+        <div class="opening-moves" id="p1-opening"></div>
+        <div class="battle-actions">
+          <button class="battle-atk-btn" id="p1-splash-btn">⚡ Splash</button>
+          <button class="battle-atk-btn" id="p1-ghost-btn">👻 Ghost</button>
+        </div>
+        <div class="start-hint">Tap to Start</div>
+      </div>
+      <div class="divider"></div>
+      <div class="clock-panel" id="p2">
+        <div class="player-label" id="p2-label">Black</div>
+        <div class="time-display" id="p2-time">5:00</div>
+        <div class="active-dot"></div>
+        <div class="inc-badge" id="p2-inc"></div>
+        <div class="move-count" id="p2-moves">Round 0</div>
+        <div class="opening-moves" id="p2-opening"></div>
+        <div class="battle-actions">
+          <button class="battle-atk-btn" id="p2-splash-btn">⚡ Splash</button>
+          <button class="battle-atk-btn" id="p2-ghost-btn">👻 Ghost</button>
+        </div>
+        <div class="start-hint">Tap to Start</div>
+      </div>
+    </div>
+    <div id="status-bar">Click your side after you move &nbsp;|&nbsp; Space = Pause &nbsp;|&nbsp; R = Reset</div>
+  </div>
+
+  <!-- ══ Game Over ══ -->
+  <div id="gameover-screen">
+    <div id="gameover-content">
+      <div class="gameover-word" id="gameover-line1"></div>
+      <div class="gameover-word" id="gameover-line2"></div>
+      <div id="gameover-winner"></div>
+      <div id="gameover-recorded"></div>
+    </div>
+    <div id="gameover-actions">
+      <button class="gameover-btn" id="gameover-again">Play Again</button>
+      <button class="gameover-btn" id="gameover-change">Change Time</button>
+    </div>
+  </div>
+
+  <!-- ══ Checkmate Modal ══ -->
+  <div id="checkmate-modal">
+    <div class="cm-box">
+      <div class="cm-title">Who won by checkmate?</div>
+      <div class="cm-buttons">
+        <button class="cm-btn cm-white" id="cm-white">♔ <span id="cm-white-label">White</span></button>
+        <button class="cm-btn cm-black" id="cm-black">♚ <span id="cm-black-label">Black</span></button>
+      </div>
+      <button class="cm-btn cm-draw" id="cm-draw">Draw</button>
+      <button class="cm-cancel" id="cm-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ══ Battle Chess Intro ══ -->
+  <div id="battle-intro">
+    <div id="battle-toolbar">
+      <button class="tb-btn" id="battle-back">← Back</button>
+      <div class="battle-screen-title">Battle Chess</div>
+      <div style="width:80px"></div>
+    </div>
+    <div id="battle-scroll">
+
+      <!-- Ability 1: Splash -->
+      <div class="battle-ability-card">
+        <div class="battle-ability-header">
+          <div class="battle-ability-icon">⚡</div>
+          <div class="battle-ability-name">Splash Damage</div>
+        </div>
+        <div class="battle-ability-desc">
+          Attack a square to deal damage to all 4 adjacent squares at the same time.
+        </div>
+        <!-- 5×5 board centred on e4 (light). White Queen on e4 [spl-src].
+             Adjacent dark squares (d4,f4,e5,e3) take splash [spl-hit].
+             Black King on e3 survives [spl-king + badge].
+             Col order L→R: c(3),d(4),e(5),f(6),g(7). Rows top→bottom: 6,5,4,3,2.
+             Color: (col+row) even=dark(D), odd=light(L). -->
+        <div style="display:flex;justify-content:center">
+          <div class="demo-board b5">
+            <!-- row 6: L D L D L -->
+            <div class="sq l"></div>
+            <div class="sq d"></div>
+            <div class="sq l"></div>
+            <div class="sq d"></div>
+            <div class="sq l"></div>
+            <!-- row 5: D L D(bN/hit) L(bP) D -->
+            <div class="sq d"></div>
+            <div class="sq l"><span class="piece b">♟</span></div>
+            <div class="sq d spl-hit"><span class="piece b">♞</span></div>
+            <div class="sq l"><span class="piece b">♟</span></div>
+            <div class="sq d"></div>
+            <!-- row 4: L(wP) D(bR/hit) L(wQ/src) D(bB/hit) L(wP) -->
+            <div class="sq l"><span class="piece w">♙</span></div>
+            <div class="sq d spl-hit"><span class="piece b">♜</span></div>
+            <div class="sq l spl-src"><span class="piece w">♕</span></div>
+            <div class="sq d spl-hit"><span class="piece b">♝</span></div>
+            <div class="sq l"><span class="piece w">♙</span></div>
+            <!-- row 3: D L D(bK/king) L D -->
+            <div class="sq d"></div>
+            <div class="sq l"></div>
+            <div class="sq d spl-king"><span class="piece b">♚</span>
+              <div class="king-badge">✓</div>
+            </div>
+            <div class="sq l"></div>
+            <div class="sq d"></div>
+            <!-- row 2: L D L D L -->
+            <div class="sq l"></div>
+            <div class="sq d"></div>
+            <div class="sq l"></div>
+            <div class="sq d"></div>
+            <div class="sq l"></div>
+          </div>
+        </div>
+        <div class="battle-ability-note">⚡ Once per game per player</div>
+      </div>
+
+      <!-- Ability 2: Ghost Move -->
+      <div class="battle-ability-card">
+        <div class="battle-ability-header">
+          <div class="battle-ability-icon">👻</div>
+          <div class="battle-ability-name">Ghost Move</div>
+        </div>
+        <div class="battle-ability-desc">
+          Move one of your pieces through a single opponent piece to land on a square behind it.
+        </div>
+        <!-- 5×4 board. White Rook on d4 [ghost-mover] slides through black Pawn on e4 [gh-enemy] to land on f4 [gh-land].
+             Cols: c(3),d(4),e(5),f(6),g(7). Rows top→bottom: 6,5,4,3.
+             Color: (col+row) even=D odd=L. -->
+        <div style="display:flex;justify-content:center">
+          <div class="demo-board b5x4">
+            <!-- row 6: L D(bR) L D L -->
+            <div class="sq l"></div>
+            <div class="sq d"><span class="piece b">♜</span></div>
+            <div class="sq l"></div>
+            <div class="sq d"></div>
+            <div class="sq l"></div>
+            <!-- row 5: D L D(bP) L D -->
+            <div class="sq d"></div>
+            <div class="sq l"></div>
+            <div class="sq d"><span class="piece b">♟</span></div>
+            <div class="sq l"></div>
+            <div class="sq d"></div>
+            <!-- row 4: L(wP) D(wR/mover) L(bP/enemy) D(landing) L -->
+            <div class="sq l"><span class="piece w">♙</span></div>
+            <div class="sq d">
+              <div class="ghost-mover">♖</div>
+            </div>
+            <div class="sq l gh-enemy"><span class="piece b">♟</span></div>
+            <div class="sq d gh-land"></div>
+            <div class="sq l"></div>
+            <!-- row 3: D L(wP) D L D -->
+            <div class="sq d"></div>
+            <div class="sq l"><span class="piece w">♙</span></div>
+            <div class="sq d"></div>
+            <div class="sq l"></div>
+            <div class="sq d"></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#906030;line-height:1.7;letter-spacing:1px">
+          Your piece passes through the enemy. The opponent's piece is <span style="color:#c89858;font-weight:800">not
+            captured</span> — it stays. You just phase past it.
+        </div>
+        <div class="battle-ability-note">👻 Once per game per player</div>
+      </div>
+
+      <button id="battle-start-btn">Choose Time Control →</button>
+    </div>
+  </div>
+
+  <!-- ══ Battle Attack Overlay ══ -->
+  <div id="battle-overlay">
+    <div class="battle-overlay-box">
+      <div class="battle-overlay-icon" id="bo-icon">⚡</div>
+      <div class="battle-overlay-title" id="bo-title">Splash Damage</div>
+      <div class="battle-overlay-player" id="bo-player">White activates</div>
+      <div class="battle-overlay-desc" id="bo-desc">Attack a square — all 4 adjacent squares are also damaged. The king
+        cannot be eliminated.</div>
+      <button id="battle-overlay-ok">Got it</button>
+    </div>
+  </div>
+
+  <!-- ══ Opening Carousel ══ -->
+  <div id="opening-screen">
+    <div id="opening-toolbar">
+      <button class="tb-btn" id="opening-back">← Back</button>
+      <div class="opening-title">Openings</div>
+      <div style="width:80px"></div>
+    </div>
+    <div id="opening-carousel-area">
+      <div class="carousel-cards">
+        <div class="carousel-card">
+          <div class="carousel-color-label white">White</div>
+          <div class="carousel-name" id="carousel-white-name">—</div>
+        </div>
+        <div class="carousel-card">
+          <div class="carousel-color-label black">Black</div>
+          <div class="carousel-name" id="carousel-black-name">—</div>
+        </div>
+      </div>
+      <button id="opening-start-btn">Start</button>
+      <div class="carousel-hint">Press Start to lock in your openings</div>
+    </div>
+  </div>
+
+  <!-- ══ Records Screen ══ -->
+  <div id="records-screen">
+    <div id="records-toolbar">
+      <button class="tb-btn" id="records-back">← Back</button>
+      <div class="records-title">Records</div>
+      <button class="tb-btn" id="records-clear" style="color:#7a2020;border-color:#4a1a1a">Clear All</button>
+    </div>
+    <div id="records-scroll">
+      <div>
+        <div class="rec-section-label">Players</div>
+        <div class="rec-add-row">
+          <input type="text" id="rec-name-input" placeholder="Enter player name…" maxlength="18" autocomplete="off">
+          <button id="rec-add-btn">+ Add</button>
+        </div>
+      </div>
+      <div id="rec-players"></div>
+      <div id="rec-leaderboard-section">
+        <div class="rec-section-label">Leaderboard</div>
+        <div id="rec-leaderboard"></div>
+      </div>
+      <div>
+        <div class="rec-section-label">Head to Head</div>
+        <div id="rec-records"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Opening Result Modal ══ -->
+  <div id="op-result-modal">
+    <div class="op-result-box">
+      <div class="op-result-title">Your Openings</div>
+      <div class="op-result-rows">
+        <div class="op-result-row">
+          <div class="op-result-color white">White</div>
+          <div class="op-result-name" id="op-res-white-name">—</div>
+          <div class="op-result-moves" id="op-res-white-moves"></div>
+        </div>
+        <div class="op-result-row">
+          <div class="op-result-color black">Black</div>
+          <div class="op-result-name" id="op-res-black-name">—</div>
+          <div class="op-result-moves" id="op-res-black-moves"></div>
+        </div>
+      </div>
+      <div class="op-result-btns">
+        <button id="op-start-game">Start Game</button>
+        <button id="op-new-openings">Get New Openings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Custom Time Modal ══ -->
+  <div id="modal">
+    <div class="modal-box">
+      <h2>Custom Time</h2>
+      <div class="modal-cols">
+        <div class="modal-col">
+          <div class="col-header white">White</div>
+          <div class="modal-field">
+            <label>Minutes</label>
+            <div class="stepper">
+              <button class="step-btn" data-id="w-min" data-dir="-1">▼</button>
+              <span class="step-val" id="w-min-val">5</span>
+              <button class="step-btn" data-id="w-min" data-dir="1">▲</button>
+            </div>
+          </div>
+          <div class="modal-field">
+            <label>Increment (sec)</label>
+            <div class="stepper">
+              <button class="step-btn" data-id="w-inc" data-dir="-1">▼</button>
+              <span class="step-val" id="w-inc-val">0</span>
+              <button class="step-btn" data-id="w-inc" data-dir="1">▲</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-col-divider"></div>
+        <div class="modal-col">
+          <div class="col-header black">Black</div>
+          <div class="modal-field">
+            <label>Minutes</label>
+            <div class="stepper step-black">
+              <button class="step-btn" data-id="b-min" data-dir="-1">▼</button>
+              <span class="step-val" id="b-min-val">5</span>
+              <button class="step-btn" data-id="b-min" data-dir="1">▲</button>
+            </div>
+          </div>
+          <div class="modal-field">
+            <label>Increment (sec)</label>
+            <div class="stepper step-black">
+              <button class="step-btn" data-id="b-inc" data-dir="-1">▼</button>
+              <span class="step-val" id="b-inc-val">0</span>
+              <button class="step-btn" data-id="b-inc" data-dir="1">▲</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-sync">
+        <input type="checkbox" id="sync-check" checked>
+        <label for="sync-check">Same for both players</label>
+      </div>
+      <div class="modal-actions">
+        <button id="modal-cancel">Cancel</button>
+        <button id="modal-ok">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ── Constants ─────────────────────────────────────────────────────────── */
+    const PRESETS = [
+      { label: '1+0', category: 'Bullet', min: 1, inc: 0 },
+      { label: '2+1', category: 'Bullet', min: 2, inc: 1 },
+      { label: '3+0', category: 'Blitz', min: 3, inc: 0 },
+      { label: '3+2', category: 'Blitz', min: 3, inc: 2 },
+      { label: '5+0', category: 'Blitz', min: 5, inc: 0 },
+      { label: '5+3', category: 'Blitz', min: 5, inc: 3 },
+      { label: '10+0', category: 'Rapid', min: 10, inc: 0 },
+      { label: '10+5', category: 'Rapid', min: 10, inc: 5 },
+      { label: '15+10', category: 'Rapid', min: 15, inc: 10 },
+      { label: '30+0', category: 'Classical', min: 30, inc: 0 },
+    ];
+
+    const TIMEOUT_MSGS = [
+      { top: 'Flagged!', bot: '' },
+      { top: 'Too slow!', bot: '' },
+      { top: 'The clock', bot: 'won' },
+      { top: 'Tick tock', bot: 'bye' },
+      { top: 'Even pawns', bot: 'move faster' },
+      { top: 'Outflagged!', bot: '' },
+      { top: 'GG on', bot: 'time' },
+      { top: 'No time', bot: 'left' },
+      { top: 'The clock', bot: 'said no' },
+      { top: 'Time flies', bot: "you don't" },
+      { top: "Should've", bot: 'moved faster' },
+      { top: 'Bring', bot: 'a watch' },
+    ];
+
+    const CHECKMATE_MSGS = [
+      { top: 'Checkmate!', bot: '' },
+      { top: 'Mated!', bot: '' },
+      { top: 'The king', bot: 'is dead' },
+      { top: 'Crushed', bot: '' },
+      { top: 'No escape', bot: '' },
+      { top: 'GG', bot: '' },
+      { top: 'Destroyed', bot: '' },
+      { top: 'Clean', bot: 'mate' },
+    ];
+
+    const DRAW_MSGS = [
+      { top: 'Draw!', bot: '' },
+      { top: 'Nobody', bot: 'wins' },
+      { top: 'Stalemate', bot: '' },
+      { top: 'Peace', bot: 'was chosen' },
+    ];
+
+    const OPENINGS = [
+      { name: 'Ruy Lopez', white: ['e4', 'Nf3', 'Bb5', 'Ba4'], black: ['e5', 'Nc6', 'a6', 'Nf6'] },
+      { name: 'Italian Game', white: ['e4', 'Nf3', 'Bc4', 'c3'], black: ['e5', 'Nc6', 'Bc5', 'Nf6'] },
+      { name: 'Vienna Game', white: ['e4', 'Nc3', 'Bc4', 'd3'], black: ['e5', 'Nc6', 'Bc5', 'Nf6'] },
+      { name: 'Four Knights', white: ['e4', 'Nf3', 'Nc3', 'Bb5'], black: ['e5', 'Nc6', 'Nf6', 'Bb4'] },
+      { name: "Bishop's Opening", white: ['e4', 'Bc4', 'Nf3', 'd3'], black: ['e5', 'Nf6', 'Nc6', 'Bc5'] },
+      { name: "King's Indian Atk", white: ['Nf3', 'g3', 'Bg2', 'd3'], black: ['d5', 'Nf6', 'c5', 'Nc6'] },
+      { name: 'English Opening', white: ['c4', 'Nc3', 'g3', 'Bg2'], black: ['e5', 'Nc6', 'Nf6', 'Bb4'] },
+      { name: 'Réti Opening', white: ['Nf3', 'c4', 'b3', 'Bb2'], black: ['d5', 'Nf6', 'c6', 'Bf5'] },
+      { name: "Queen's Gambit", white: ['d4', 'c4', 'Nc3', 'Nf3'], black: ['d5', 'e6', 'Nf6', 'Be7'] },
+      { name: 'London System', white: ['d4', 'Nf3', 'Bf4', 'e3'], black: ['d5', 'Nf6', 'e6', 'Be7'] },
+      { name: 'Catalan Opening', white: ['d4', 'c4', 'Nf3', 'g3'], black: ['Nf6', 'e6', 'd5', 'Be7'] },
+      { name: 'Colle System', white: ['d4', 'Nf3', 'e3', 'Bd3'], black: ['d5', 'Nf6', 'e6', 'c5'] },
+      { name: 'Sicilian Defense', white: ['e4', 'Nf3', 'd4', 'Nc3'], black: ['c5', 'd6', 'Nf6', 'a6'] },
+      { name: 'French Defense', white: ['e4', 'd4', 'Nc3', 'Bg5'], black: ['e6', 'd5', 'Nf6', 'Be7'] },
+      { name: 'Caro-Kann', white: ['e4', 'd4', 'Nc3', 'Nf3'], black: ['c6', 'd5', 'Bf5', 'e6'] },
+      { name: "King's Indian Def", white: ['d4', 'c4', 'Nc3', 'Nf3'], black: ['Nf6', 'g6', 'Bg7', 'd6'] },
+      { name: 'Grünfeld Defense', white: ['d4', 'c4', 'Nc3', 'Nf3'], black: ['Nf6', 'g6', 'd5', 'Bg7'] },
+      { name: 'Nimzo-Indian', white: ['d4', 'Nf3', 'c4', 'Nc3'], black: ['Nf6', 'e6', 'd5', 'Bb4'] },
+      { name: "Queen's Indian", white: ['d4', 'Nf3', 'c4', 'g3'], black: ['Nf6', 'e6', 'b6', 'Bb7'] },
+      { name: 'Pirc Defense', white: ['e4', 'd4', 'Nc3', 'f4'], black: ['d6', 'Nf6', 'g6', 'Bg7'] },
+    ];
+
+    /* ── localStorage helpers ──────────────────────────────────────────────── */
+    function getPlayers() { try { return JSON.parse(localStorage.getItem('ct-players') || '[]'); } catch { return []; } }
+    function savePlayers(p) { localStorage.setItem('ct-players', JSON.stringify(p)); }
+    function getRecords() { try { return JSON.parse(localStorage.getItem('ct-records') || '{}'); } catch { return {}; } }
+    function saveRecords(r) { localStorage.setItem('ct-records', JSON.stringify(r)); }
+    function getElo() { try { return JSON.parse(localStorage.getItem('ct-elo') || '{}'); } catch { return {}; } }
+    function saveElo(e) { localStorage.setItem('ct-elo', JSON.stringify(e)); }
+    function playerElo(name) { return getElo()[name] || 1200; }
+
+    // Returns { deltaWinner, deltaLoser } — positive for winner, negative for loser
+    function applyElo(winner, loser) {
+      const elo = getElo();
+      const rW = elo[winner] || 1200;
+      const rL = elo[loser] || 1200;
+      const K = 32;
+      const expW = 1 / (1 + Math.pow(10, (rL - rW) / 400));
+      elo[winner] = Math.round(rW + K * (1 - expW));
+      elo[loser] = Math.round(rL + K * (0 - (1 - expW)));
+      saveElo(elo);
+      return { deltaWinner: elo[winner] - rW, deltaLoser: elo[loser] - rL };
+    }
+
+    // Records a win in head-to-head AND updates ELO; returns ELO deltas
+    function recordWin(winner, loser) {
+      if (!winner || !loser) return null;
+      const key = [winner, loser].sort().join('|');
+      const recs = getRecords();
+      if (!recs[key]) recs[key] = {};
+      recs[key][winner] = (recs[key][winner] || 0) + 1;
+      saveRecords(recs);
+      return applyElo(winner, loser);
+    }
+
+    /* ── Clock state ───────────────────────────────────────────────────────── */
+    let times = [300, 300];
+    let baseTimes = [300, 300];
+    let increments = [0, 0];
+    let active = -1;
+    let paused = true;
+    let gameOver = false;
+    let moves = [0, 0];
+    let rafId = null;
+    let lastTS = null;
+
+    let currentWhitePlayer = null; // player name or null (guest)
+    let currentBlackPlayer = null;
+
+    /* ── Opening state ─────────────────────────────────────────────────────── */
+    let opWhiteIdx = 0;
+    let opBlackIdx = 0;
+    let carouselTimer = null;
+    let carouselPhase = 'idle'; // 'spinning' | 'stopping' | 'idle'
+    let activeOpening = null; // { name, white: [...], black: [...] } or null
+
+    function renderOpeningMoves() {
+      const p1El = document.getElementById('p1-opening');
+      const p2El = document.getElementById('p2-opening');
+      p1El.innerHTML = ''; p2El.innerHTML = '';
+      p1El.classList.remove('visible'); p2El.classList.remove('visible');
+      if (!activeOpening) return;
+
+      const wo = activeOpening.white; // { name, moves: [...] }
+      const bo = activeOpening.black;
+
+      // White panel (p1)
+      const wName = document.createElement('div'); wName.className = 'op-name'; wName.textContent = wo.name;
+      p1El.appendChild(wName);
+      wo.moves.forEach((mv, i) => {
+        const span = document.createElement('span'); span.className = 'op-move'; span.textContent = (i + 1) + '. ' + mv;
+        span.dataset.idx = i;
+        p1El.appendChild(span);
+      });
+      p1El.classList.add('visible');
+
+      // Black panel (p2)
+      const bName = document.createElement('div'); bName.className = 'op-name'; bName.textContent = bo.name;
+      p2El.appendChild(bName);
+      bo.moves.forEach((mv, i) => {
+        const span = document.createElement('span'); span.className = 'op-move'; span.textContent = (i + 1) + '... ' + mv;
+        span.dataset.idx = i;
+        p2El.appendChild(span);
+      });
+      p2El.classList.add('visible');
+    }
+
+    function updateOpeningHighlight() {
+      if (!activeOpening) return;
+      document.querySelectorAll('#p1-opening .op-move').forEach(el => {
+        const i = parseInt(el.dataset.idx);
+        el.classList.toggle('done', i < moves[0]);
+        el.classList.toggle('current', i === moves[0] && moves[0] < activeOpening.white.moves.length);
+      });
+      document.querySelectorAll('#p2-opening .op-move').forEach(el => {
+        const i = parseInt(el.dataset.idx);
+        el.classList.toggle('done', i < moves[1]);
+        el.classList.toggle('current', i === moves[1] && moves[1] < activeOpening.black.moves.length);
+      });
+      // Hide once both players have played all opening moves
+      if (moves[0] >= activeOpening.white.moves.length && moves[1] >= activeOpening.black.moves.length) {
+        document.getElementById('p1-opening').classList.remove('visible');
+        document.getElementById('p2-opening').classList.remove('visible');
+      }
+    }
+
+    /* ── Player-assign state ───────────────────────────────────────────────── */
+    let selectedWhite = null;
+    let selectedBlack = null;
+
+    /* ── Battle state ──────────────────────────────────────────────────────── */
+    let battleMode = false;
+    let splashUsed = [false, false]; // [p1, p2]
+    let ghostUsed = [false, false];
+
+    /* ── DOM ──────────────────────────────────────────────────────────────── */
+    const introEl = document.getElementById('intro');
+    const homeEl = document.getElementById('home-screen');
+    const tsEl = document.getElementById('time-select');
+    const paEl = document.getElementById('player-assign');
+    const cvEl = document.getElementById('clock-view');
+    const gameoverEl = document.getElementById('gameover-screen');
+    const gameoverContent = document.getElementById('gameover-content');
+    const gameoverActions = document.getElementById('gameover-actions');
+    const openingEl = document.getElementById('opening-screen');
+    const recordsEl = document.getElementById('records-screen');
+    const battleIntroEl = document.getElementById('battle-intro');
+    const battleOverlay = document.getElementById('battle-overlay');
+    const opResultModal = document.getElementById('op-result-modal');
+    const panels = [document.getElementById('p1'), document.getElementById('p2')];
+    const timeEls = [document.getElementById('p1-time'), document.getElementById('p2-time')];
+    const labelEls = [document.getElementById('p1-label'), document.getElementById('p2-label')];
+    const moveEls = [document.getElementById('p1-moves'), document.getElementById('p2-moves')];
+    const incBadges = [document.getElementById('p1-inc'), document.getElementById('p2-inc')];
+    const pauseBtn = document.getElementById('pause-btn');
+    const modal = document.getElementById('modal');
+    const syncCheck = document.getElementById('sync-check');
+    const statusBar = document.getElementById('status-bar');
+
+    /* ── View transitions ──────────────────────────────────────────────────── */
+    const BLUR_MS = 420;
+
+    function switchView(fromEl, toEl, onSwitch) {
+      fromEl.style.transition = `filter ${BLUR_MS}ms ease, opacity ${BLUR_MS}ms ease`;
+      fromEl.style.filter = 'blur(24px)';
+      fromEl.style.opacity = '0';
+      fromEl.style.pointerEvents = 'none';
+      setTimeout(() => {
+        fromEl.style.display = 'none';
+        fromEl.style.transition = fromEl.style.filter = fromEl.style.opacity = '';
+        fromEl.style.pointerEvents = '';
+        toEl.style.transition = 'none';
+        toEl.style.filter = 'blur(24px)';
+        toEl.style.opacity = '0';
+        toEl.style.pointerEvents = 'none';
+        toEl.style.display = 'flex';
+        if (onSwitch) onSwitch();
+        void toEl.offsetHeight;
+        toEl.style.transition = `filter ${BLUR_MS}ms ease, opacity ${BLUR_MS}ms ease`;
+        toEl.style.filter = 'blur(0px)';
+        toEl.style.opacity = '1';
+        toEl.style.pointerEvents = '';
+        setTimeout(() => { toEl.style.transition = toEl.style.filter = toEl.style.opacity = ''; }, BLUR_MS);
+      }, BLUR_MS);
+    }
+
+    /* ── Time-control selector ─────────────────────────────────────────────── */
+    function buildSelector() {
+      const grid = document.getElementById('ts-grid');
+      PRESETS.forEach(p => {
+        const tile = document.createElement('div');
+        tile.className = 'ts-tile';
+        tile.innerHTML = `<div class="ts-tile-time">${p.label}</div><div class="ts-tile-category">${p.category}</div>`;
+        tile.addEventListener('click', () => { baseTimes = [p.min * 60, p.min * 60]; increments = [p.inc, p.inc]; afterTimeSelect(); });
+        grid.appendChild(tile);
+      });
+      const custom = document.createElement('div');
+      custom.className = 'ts-tile custom';
+      custom.innerHTML = `<div class="ts-tile-time">Custom</div><div class="ts-tile-category">Set your own time</div>`;
+      custom.addEventListener('click', openCustomModal);
+      grid.appendChild(custom);
+    }
+
+    // After time is chosen, go to player-assign (if players exist) or directly to clock
+    function afterTimeSelect() {
+      const players = getPlayers();
+      const goToClock = () => {
+        setBattleMode(battleMode); // apply battle-active class
+        reset();
+      };
+      if (players.length >= 2) {
+        switchView(tsEl, paEl, resetPlayerAssign);
+      } else {
+        currentWhitePlayer = null;
+        currentBlackPlayer = null;
+        switchView(tsEl, cvEl, goToClock);
+      }
+    }
+
+    /* ── Format / display ──────────────────────────────────────────────────── */
+    function formatTime(secs) {
+      if (secs <= 0) return '0:00';
+      if (secs < 10) { const w = Math.floor(secs); const t = Math.floor((secs % 1) * 10); return `0:0${w}.${t}`; }
+      return `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, '0')}`;
+    }
+
+    function updateDisplay() {
+      for (let i = 0; i < 2; i++) {
+        timeEls[i].textContent = formatTime(times[i]);
+        moveEls[i].textContent = `Round ${moves[i]}`;
+        incBadges[i].textContent = increments[i] > 0 ? `+${increments[i]}s / move` : '';
+        timeEls[i].classList.toggle('danger', times[i] < 10 && !gameOver && active !== -1);
+        panels[i].classList.remove('active', 'inactive');
+        if (!paused && !gameOver && active !== -1)
+          panels[i].classList.add(active === i ? 'active' : 'inactive');
+      }
+      pauseBtn.textContent = paused ? 'Pause' : 'Resume';
+      pauseBtn.disabled = active === -1 || gameOver;
+      document.getElementById('checkmate-btn').disabled = active === -1 || gameOver;
+      if (battleMode) updateBattleButtons();
+      updateOpeningHighlight();
+    }
+
+    /* ── RAF loop ──────────────────────────────────────────────────────────── */
+    function tick(ts) {
+      if (lastTS === null) lastTS = ts;
+      const dt = (ts - lastTS) / 1000; lastTS = ts;
+      if (active !== -1 && !paused && !gameOver) {
+        times[active] -= dt;
+        if (times[active] <= 0) { times[active] = 0; rafId = null; endGame(active); return; }
+      }
+      updateDisplay();
+      rafId = requestAnimationFrame(tick);
+    }
+    function startLoop() { if (rafId) return; lastTS = null; rafId = requestAnimationFrame(tick); acquireWake(); }
+    function stopLoop() { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } releaseWake(); }
+
+    /* ── Screen Wake Lock — prevent screen from sleeping while clock runs ── */
+    let wakeLock = null;
+
+    /* Primary: Wake Lock API (works on HTTPS) */
+    async function tryWakeLockAPI() {
+      if (!('wakeLock' in navigator)) return false;
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+        return true;
+      } catch (e) { return false; }
+    }
+
+    /* Fallback: live canvas video stream keeps screen on (proven on iOS Safari) */
+    let noSleepVideo = null;
+    let noSleepCanvas = null;
+    let noSleepInterval = null;
+
+    function createNoSleep() {
+      if (noSleepVideo) return;
+
+      /* Create a 1x1 canvas that draws a frame every second — this creates a real
+         media stream that iOS treats as active video, preventing auto-lock */
+      noSleepCanvas = document.createElement('canvas');
+      noSleepCanvas.width = 1;
+      noSleepCanvas.height = 1;
+      const ctx = noSleepCanvas.getContext('2d');
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, 1, 1);
+
+      noSleepVideo = document.createElement('video');
+      noSleepVideo.setAttribute('playsinline', '');
+      noSleepVideo.setAttribute('muted', '');
+      noSleepVideo.muted = true;
+      noSleepVideo.style.cssText = 'position:fixed;top:-1px;left:-1px;width:1px;height:1px;opacity:0.001;pointer-events:none;';
+      document.body.appendChild(noSleepVideo);
+
+      /* Use captureStream if available (most browsers) */
+      if (noSleepCanvas.captureStream) {
+        noSleepVideo.srcObject = noSleepCanvas.captureStream(1);
+      } else if (noSleepCanvas.mozCaptureStream) {
+        noSleepVideo.srcObject = noSleepCanvas.mozCaptureStream(1);
+      }
+    }
+
+    function startNoSleep() {
+      createNoSleep();
+      if (!noSleepVideo) return;
+
+      const p = noSleepVideo.play();
+      if (p) p.catch(() => {});
+
+      /* Periodically redraw canvas + re-kick play (iOS aggressively pauses idle video) */
+      clearInterval(noSleepInterval);
+      noSleepInterval = setInterval(() => {
+        if (!noSleepCanvas) return;
+        const ctx = noSleepCanvas.getContext('2d');
+        ctx.fillStyle = ctx.fillStyle === '#000' ? '#001' : '#000';
+        ctx.fillRect(0, 0, 1, 1);
+        if (noSleepVideo.paused) {
+          const p = noSleepVideo.play();
+          if (p) p.catch(() => {});
+        }
+      }, 3000);
+    }
+
+    function stopNoSleep() {
+      clearInterval(noSleepInterval);
+      noSleepInterval = null;
+      if (noSleepVideo) noSleepVideo.pause();
+    }
+
+    async function acquireWake() {
+      const gotAPI = await tryWakeLockAPI();
+      if (!gotAPI) startNoSleep();
+    }
+
+    function releaseWake() {
+      if (wakeLock) { wakeLock.release(); wakeLock = null; }
+      stopNoSleep();
+    }
+
+    /* Re-acquire when tab becomes visible again */
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && rafId && !paused && !gameOver) acquireWake();
+    });
+
+    /* ── Clock logic ───────────────────────────────────────────────────────── */
+    function switchClock(player) {
+      if (gameOver) return;
+      if (active === -1) { active = 1 - player; paused = false; moves[player]++; startLoop(); return; }
+      if (paused || active !== player) return;
+      if (increments[player] > 0) times[player] += increments[player];
+      moves[player]++; active = 1 - player; lastTS = null;
+    }
+
+    /* ── Game over ─────────────────────────────────────────────────────────── */
+    function endGame(loser) {
+      declareWinner(loser, 'time');
+    }
+
+    function togglePause() {
+      if (gameOver || active === -1) return;
+      paused = !paused;
+      if (paused) stopLoop(); else startLoop();
+      updateDisplay();
+    }
+
+    function reset() {
+      stopLoop();
+      times = [...baseTimes];
+      active = -1; paused = true; gameOver = false; moves = [0, 0]; lastTS = null;
+      labelEls[0].textContent = currentWhitePlayer || 'White';
+      labelEls[1].textContent = currentBlackPlayer || 'Black';
+      statusBar.textContent = 'Click your side after you move \u00a0|\u00a0 Space = Pause \u00a0|\u00a0 R = Reset';
+      if (battleMode) resetBattle();
+      renderOpeningMoves();
+      updateDisplay();
+    }
+
+    document.getElementById('gameover-again').addEventListener('click', () => {
+      gameoverEl.style.display = 'none';
+      reset(); cvEl.style.display = 'flex';
+    });
+    document.getElementById('gameover-change').addEventListener('click', () => {
+      currentWhitePlayer = null; currentBlackPlayer = null;
+      reset();
+      switchView(gameoverEl, homeEl);
+    });
+
+    document.getElementById('change-btn').addEventListener('click', () => {
+      stopLoop(); setBattleMode(false); activeOpening = null; switchView(cvEl, homeEl);
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.code === 'Space') { e.preventDefault(); togglePause(); }
+      if (e.key === 'r' || e.key === 'R') {
+        if (gameoverEl.style.display === 'flex') {
+          gameoverEl.style.display = 'none'; reset(); cvEl.style.display = 'flex';
+        } else { reset(); }
+      }
+    });
+
+    panels[0].addEventListener('click', () => switchClock(0));
+    panels[1].addEventListener('click', () => switchClock(1));
+    pauseBtn.addEventListener('click', togglePause);
+    document.getElementById('reset-btn').addEventListener('click', reset);
+
+    /* ── Checkmate / Draw declaration ──────────────────────────────────────── */
+    const cmModal = document.getElementById('checkmate-modal');
+
+    document.getElementById('checkmate-btn').addEventListener('click', () => {
+      if (active === -1 || gameOver) return;
+      /* Pause the clock while choosing */
+      if (!paused) { paused = true; stopLoop(); updateDisplay(); }
+      /* Show player names on buttons */
+      document.getElementById('cm-white-label').textContent = currentWhitePlayer || 'White';
+      document.getElementById('cm-black-label').textContent = currentBlackPlayer || 'Black';
+      cmModal.classList.add('show');
+    });
+
+    document.getElementById('cm-cancel').addEventListener('click', () => {
+      cmModal.classList.remove('show');
+    });
+
+    document.getElementById('cm-white').addEventListener('click', () => {
+      cmModal.classList.remove('show');
+      declareWinner(1, 'checkmate'); /* loser = black (index 1) */
+    });
+
+    document.getElementById('cm-black').addEventListener('click', () => {
+      cmModal.classList.remove('show');
+      declareWinner(0, 'checkmate'); /* loser = white (index 0) */
+    });
+
+    document.getElementById('cm-draw').addEventListener('click', () => {
+      cmModal.classList.remove('show');
+      declareDraw();
+    });
+
+    function declareWinner(loser, reason) {
+      gameOver = true; stopLoop(); updateDisplay();
+      const msgs = reason === 'checkmate' ? CHECKMATE_MSGS : TIMEOUT_MSGS;
+      const msg = msgs[Math.floor(Math.random() * msgs.length)];
+      const winnerName = loser === 0 ? 'Black' : 'White';
+      const winnerPlayer = loser === 0 ? currentBlackPlayer : currentWhitePlayer;
+      const loserPlayer = loser === 0 ? currentWhitePlayer : currentBlackPlayer;
+      const reasonText = reason === 'checkmate' ? 'by checkmate' : 'on time';
+      statusBar.textContent = `${winnerPlayer || winnerName} wins ${reasonText}!`;
+
+      const recEl = document.getElementById('gameover-recorded');
+      if (winnerPlayer && loserPlayer) {
+        const delta = recordWin(winnerPlayer, loserPlayer);
+        const dW = delta.deltaWinner, dL = delta.deltaLoser;
+        recEl.innerHTML =
+          `Recorded &nbsp;·&nbsp; ` +
+          `<span style="color:#3ddc84">${winnerPlayer} +${dW}</span>` +
+          ` &nbsp;·&nbsp; ` +
+          `<span style="color:#cc4040">${loserPlayer} ${dL}</span>`;
+        recEl.style.display = 'block';
+      } else {
+        recEl.style.display = 'none';
+      }
+
+      cvEl.style.transition = `filter ${BLUR_MS}ms ease, opacity ${BLUR_MS}ms ease`;
+      cvEl.style.filter = 'blur(24px)'; cvEl.style.opacity = '0'; cvEl.style.pointerEvents = 'none';
+      setTimeout(() => {
+        cvEl.style.display = 'none';
+        cvEl.style.transition = cvEl.style.filter = cvEl.style.opacity = ''; cvEl.style.pointerEvents = '';
+        document.getElementById('gameover-line1').textContent = msg.top;
+        document.getElementById('gameover-line2').textContent = msg.bot;
+        document.getElementById('gameover-winner').textContent =
+          winnerPlayer ? `${winnerPlayer} wins ${reasonText}` : `${winnerName} wins ${reasonText}`;
+        gameoverContent.style.animation = 'none';
+        gameoverActions.style.animation = 'none';
+        gameoverActions.style.opacity = '0';
+        gameoverEl.style.display = 'flex';
+        setTimeout(() => {
+          void gameoverContent.offsetHeight; void gameoverActions.offsetHeight;
+          gameoverContent.style.animation = 'rise-and-clear 2.2s cubic-bezier(0.16, 1, 0.3, 1) both';
+          gameoverActions.style.animation = 'gameover-fade 0.6s ease 2s both';
+        }, 400);
+      }, BLUR_MS);
+    }
+
+    function declareDraw() {
+      gameOver = true; stopLoop(); updateDisplay();
+      const msg = DRAW_MSGS[Math.floor(Math.random() * DRAW_MSGS.length)];
+      statusBar.textContent = 'Game drawn!';
+
+      const recEl = document.getElementById('gameover-recorded');
+      recEl.style.display = 'none';
+
+      cvEl.style.transition = `filter ${BLUR_MS}ms ease, opacity ${BLUR_MS}ms ease`;
+      cvEl.style.filter = 'blur(24px)'; cvEl.style.opacity = '0'; cvEl.style.pointerEvents = 'none';
+      setTimeout(() => {
+        cvEl.style.display = 'none';
+        cvEl.style.transition = cvEl.style.filter = cvEl.style.opacity = ''; cvEl.style.pointerEvents = '';
+        document.getElementById('gameover-line1').textContent = msg.top;
+        document.getElementById('gameover-line2').textContent = msg.bot;
+        document.getElementById('gameover-winner').textContent = 'Draw';
+        gameoverContent.style.animation = 'none';
+        gameoverActions.style.animation = 'none';
+        gameoverActions.style.opacity = '0';
+        gameoverEl.style.display = 'flex';
+        setTimeout(() => {
+          void gameoverContent.offsetHeight; void gameoverActions.offsetHeight;
+          gameoverContent.style.animation = 'rise-and-clear 2.2s cubic-bezier(0.16, 1, 0.3, 1) both';
+          gameoverActions.style.animation = 'gameover-fade 0.6s ease 2s both';
+        }, 400);
+      }, BLUR_MS);
+    }
+
+    /* ── Player assign ─────────────────────────────────────────────────────── */
+    function resetPlayerAssign() {
+      selectedWhite = null; selectedBlack = null;
+      renderPlayerAssign();
+    }
+
+    function renderPlayerAssign() {
+      const players = getPlayers();
+      ['white', 'black'].forEach(side => {
+        const container = document.getElementById(`pa-${side}-btns`);
+        container.innerHTML = '';
+        const selected = side === 'white' ? selectedWhite : selectedBlack;
+        const other = side === 'white' ? selectedBlack : selectedWhite;
+        players.forEach(name => {
+          const btn = document.createElement('button');
+          btn.className = 'pa-btn' + (name === selected ? ' selected' : '');
+          btn.textContent = name;
+          btn.disabled = (name === other);
+          btn.addEventListener('click', () => {
+            if (side === 'white') selectedWhite = name; else selectedBlack = name;
+            renderPlayerAssign();
+          });
+          container.appendChild(btn);
+        });
+        // Guest button
+        const g = document.createElement('button');
+        g.className = 'pa-btn' + (selected === null ? ' selected' : '');
+        g.textContent = 'Guest';
+        g.addEventListener('click', () => {
+          if (side === 'white') selectedWhite = null; else selectedBlack = null;
+          renderPlayerAssign();
+        });
+        container.appendChild(g);
+      });
+    }
+
+    document.getElementById('pa-skip').addEventListener('click', () => {
+      currentWhitePlayer = null; currentBlackPlayer = null;
+      switchView(paEl, cvEl, () => { setBattleMode(battleMode); reset(); });
+    });
+    document.getElementById('pa-confirm').addEventListener('click', () => {
+      currentWhitePlayer = selectedWhite;
+      currentBlackPlayer = selectedBlack;
+      switchView(paEl, cvEl, () => { setBattleMode(battleMode); reset(); });
+    });
+
+    /* ── Opening carousel ──────────────────────────────────────────────────── */
+    function randInt(n) { return Math.floor(Math.random() * n); }
+
+    function flashCarouselNames() {
+      const wEl = document.getElementById('carousel-white-name');
+      const bEl = document.getElementById('carousel-black-name');
+      wEl.style.opacity = '0.08';
+      bEl.style.opacity = '0.08';
+      setTimeout(() => {
+        wEl.textContent = OPENINGS[opWhiteIdx].name;
+        bEl.textContent = OPENINGS[opBlackIdx].name;
+        wEl.style.opacity = '1';
+        bEl.style.opacity = '1';
+      }, 35);
+    }
+
+    function carouselEnter() {
+      clearTimeout(carouselTimer);
+      carouselPhase = 'spinning';
+      const btn = document.getElementById('opening-start-btn');
+      btn.textContent = 'Start';
+      btn.disabled = false;
+      spinTick();
+    }
+
+    function spinTick() {
+      if (carouselPhase !== 'spinning') return;
+      opWhiteIdx = randInt(OPENINGS.length);
+      opBlackIdx = randInt(OPENINGS.length);
+      flashCarouselNames();
+      carouselTimer = setTimeout(spinTick, 90);
+    }
+
+    function stopCarousel() {
+      if (carouselPhase !== 'spinning') return;
+      clearTimeout(carouselTimer);
+      carouselPhase = 'stopping';
+      document.getElementById('opening-start-btn').disabled = true;
+
+      const delays = [130, 210, 330, 510, 760];
+      let i = 0;
+      function decelStep() {
+        opWhiteIdx = randInt(OPENINGS.length);
+        opBlackIdx = randInt(OPENINGS.length);
+        flashCarouselNames();
+        if (i < delays.length) {
+          carouselTimer = setTimeout(decelStep, delays[i++]);
+        } else {
+          carouselPhase = 'idle';
+          setTimeout(showOpeningModal, 350);
+        }
+      }
+      decelStep();
+    }
+
+    document.getElementById('opening-start-btn').addEventListener('click', stopCarousel);
+
+    document.getElementById('opening-back').addEventListener('click', () => {
+      clearTimeout(carouselTimer); carouselPhase = 'idle';
+      switchView(openingEl, homeEl);
+    });
+
+    /* ── Opening result modal ──────────────────────────────────────────────── */
+    function renderMovesInto(el, movesArr) {
+      el.innerHTML = '';
+      movesArr.forEach((mv, i) => {
+        const d = document.createElement('div'); d.className = 'op-result-move';
+        d.innerHTML = `<span class="op-result-move-num">${i + 1}.</span><span class="op-result-move-san">${mv}</span>`;
+        el.appendChild(d);
+      });
+    }
+
+    function showOpeningModal() {
+      const wo = OPENINGS[opWhiteIdx], bo = OPENINGS[opBlackIdx];
+      document.getElementById('op-res-white-name').textContent = wo.name;
+      document.getElementById('op-res-black-name').textContent = bo.name;
+      renderMovesInto(document.getElementById('op-res-white-moves'), wo.white);
+      renderMovesInto(document.getElementById('op-res-black-moves'), bo.black);
+      opResultModal.classList.add('show');
+    }
+
+    document.getElementById('op-new-openings').addEventListener('click', () => {
+      opResultModal.classList.remove('show');
+      carouselEnter();
+    });
+
+    document.getElementById('op-start-game').addEventListener('click', () => {
+      opResultModal.classList.remove('show');
+      const wo = OPENINGS[opWhiteIdx], bo = OPENINGS[opBlackIdx];
+      activeOpening = {
+        white: { name: wo.name, moves: wo.white },
+        black: { name: bo.name, moves: bo.black }
+      };
+      switchView(openingEl, tsEl);
+    });
+
+    /* ── Records screen ────────────────────────────────────────────────────── */
+    function renderRecordsScreen() {
+      const players = getPlayers();
+      const records = getRecords();
+      const elo = getElo();
+
+      // Player chips (show ELO rating inside chip)
+      const chipsEl = document.getElementById('rec-players');
+      chipsEl.innerHTML = '';
+      players.forEach(name => {
+        const rating = elo[name] || 1200;
+        const chip = document.createElement('div'); chip.className = 'rec-chip';
+        const removeBtn = document.createElement('button'); removeBtn.className = 'rec-chip-remove'; removeBtn.textContent = '×';
+        removeBtn.addEventListener('click', () => {
+          const p = getPlayers().filter(n => n !== name); savePlayers(p); renderRecordsScreen();
+        });
+        chip.innerHTML = `<span>${name}</span><span style="color:#5c3820;font-size:11px;margin-left:4px">${rating}</span>`;
+        chip.appendChild(removeBtn);
+        chipsEl.appendChild(chip);
+      });
+
+      // Leaderboard (all players sorted by ELO desc)
+      const lbSection = document.getElementById('rec-leaderboard-section');
+      const lbEl = document.getElementById('rec-leaderboard');
+      lbEl.innerHTML = '';
+      if (players.length === 0) {
+        lbSection.style.display = 'none';
+      } else {
+        lbSection.style.display = '';
+        const sorted = [...players].sort((a, b) => (elo[b] || 1200) - (elo[a] || 1200));
+        const rankClasses = ['gold', 'silver', 'bronze'];
+        sorted.forEach((name, i) => {
+          const rating = elo[name] || 1200;
+          const rankCls = rankClasses[i] || '';
+          const row = document.createElement('div'); row.className = 'rec-lb-row';
+          row.innerHTML = `
+          <div class="rec-lb-rank ${rankCls}">${i + 1}</div>
+          <div class="rec-lb-name">${name}</div>
+          <div class="rec-lb-elo">${rating}</div>
+        `;
+          lbEl.appendChild(row);
+        });
+      }
+
+      // Head-to-head records
+      const recEl = document.getElementById('rec-records');
+      recEl.innerHTML = '';
+      const keys = Object.keys(records);
+      if (keys.length === 0) {
+        recEl.innerHTML = '<div class="rec-empty">No games recorded yet</div>';
+        return;
+      }
+      keys.forEach(key => {
+        const [a, b] = key.split('|');
+        const winsA = records[key][a] || 0;
+        const winsB = records[key][b] || 0;
+        const eloA = elo[a] || 1200;
+        const eloB = elo[b] || 1200;
+        const card = document.createElement('div'); card.className = 'rec-matchup';
+        card.innerHTML = `
+        <div>
+          <div class="rec-player-name ${winsA >= winsB ? '' : 'loser'}">${a}</div>
+          <div style="font-size:10px;color:#5c3820;font-weight:800;letter-spacing:1px;margin-top:2px">${eloA}</div>
+        </div>
+        <div style="text-align:center">
+          <div class="rec-vs">vs</div>
+          <div class="rec-score">${winsA} — ${winsB}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="rec-player-name ${winsB >= winsA ? '' : 'loser'}">${b}</div>
+          <div style="font-size:10px;color:#5c3820;font-weight:800;letter-spacing:1px;margin-top:2px">${eloB}</div>
+        </div>
+      `;
+        recEl.appendChild(card);
+      });
+    }
+
+    document.getElementById('rec-add-btn').addEventListener('click', addPlayer);
+    document.getElementById('rec-name-input').addEventListener('keydown', e => { if (e.key === 'Enter') addPlayer(); });
+    function addPlayer() {
+      const input = document.getElementById('rec-name-input');
+      const name = input.value.trim();
+      if (!name) return;
+      const players = getPlayers();
+      if (players.includes(name)) { input.value = ''; return; }
+      players.push(name); savePlayers(players);
+      input.value = '';
+      renderRecordsScreen();
+    }
+
+    document.getElementById('records-back').addEventListener('click', () => switchView(recordsEl, homeEl));
+    document.getElementById('records-clear').addEventListener('click', () => {
+      if (!confirm('Clear all records and ELO ratings? This cannot be undone.')) return;
+      localStorage.removeItem('ct-records');
+      localStorage.removeItem('ct-elo');
+      renderRecordsScreen();
+    });
+
+    /* ── Battle Chess ──────────────────────────────────────────────────────── */
+    document.getElementById('battle-back').addEventListener('click', () => switchView(battleIntroEl, homeEl));
+    document.getElementById('battle-start-btn').addEventListener('click', () => {
+      battleMode = true;
+      switchView(battleIntroEl, tsEl);
+    });
+
+    function resetBattle() {
+      splashUsed = [false, false];
+      ghostUsed = [false, false];
+      updateBattleButtons();
+    }
+
+    function updateBattleButtons() {
+      const ids = ['p1-splash-btn', 'p1-ghost-btn', 'p2-splash-btn', 'p2-ghost-btn'];
+      ids.forEach(id => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        const pi = id.startsWith('p1') ? 0 : 1;
+        const isSpl = id.includes('splash');
+        const used = isSpl ? splashUsed[pi] : ghostUsed[pi];
+        btn.disabled = used || active === -1 || gameOver;
+        btn.style.textDecoration = used ? 'line-through' : '';
+        btn.style.opacity = used ? '0.3' : '';
+      });
+    }
+
+    function showBattleOverlay(playerIdx, type) {
+      const isSplash = type === 'splash';
+      const pName = playerIdx === 0
+        ? (currentWhitePlayer || 'White')
+        : (currentBlackPlayer || 'Black');
+      document.getElementById('bo-icon').textContent = isSplash ? '⚡' : '👻';
+      document.getElementById('bo-title').textContent = isSplash ? 'Splash Damage!' : 'Ghost Move!';
+      document.getElementById('bo-player').textContent = pName + ' activates';
+      document.getElementById('bo-desc').textContent = isSplash
+        ? 'Attack a square — all 4 adjacent squares take damage too. The king cannot be eliminated by splash.'
+        : 'Move a piece through one opponent piece to land on a square behind it. The blocked piece stays.';
+      battleOverlay.classList.add('show');
+    }
+
+    document.getElementById('battle-overlay-ok').addEventListener('click', () => {
+      battleOverlay.classList.remove('show');
+    });
+    battleOverlay.addEventListener('click', e => {
+      if (e.target === battleOverlay) battleOverlay.classList.remove('show');
+    });
+
+    function bindBattleBtn(id, playerIdx, type) {
+      document.getElementById(id).addEventListener('click', e => {
+        e.stopPropagation(); // don't trigger clock switch
+        if (active === -1 || gameOver) return;
+        if (type === 'splash') splashUsed[playerIdx] = true;
+        else ghostUsed[playerIdx] = true;
+        updateBattleButtons();
+        showBattleOverlay(playerIdx, type);
+      });
+    }
+    bindBattleBtn('p1-splash-btn', 0, 'splash');
+    bindBattleBtn('p1-ghost-btn', 0, 'ghost');
+    bindBattleBtn('p2-splash-btn', 1, 'splash');
+    bindBattleBtn('p2-ghost-btn', 1, 'ghost');
+
+    function setBattleMode(on) {
+      battleMode = on;
+      document.getElementById('clock-view').classList.toggle('battle-active', on);
+      if (!on) { splashUsed = [false, false]; ghostUsed = [false, false]; }
+    }
+
+    /* ── Home screen ───────────────────────────────────────────────────────── */
+    document.getElementById('home-clock').addEventListener('click', () => {
+      setBattleMode(false);
+      switchView(homeEl, tsEl);
+    });
+    document.getElementById('home-openings').addEventListener('click', () => switchView(homeEl, openingEl, carouselEnter));
+    document.getElementById('home-battle').addEventListener('click', () => switchView(homeEl, battleIntroEl));
+    document.getElementById('home-records').addEventListener('click', () => {
+      renderRecordsScreen();
+      switchView(homeEl, recordsEl);
+    });
+
+    document.getElementById('ts-back').addEventListener('click', () => switchView(tsEl, homeEl));
+
+    /* ── Custom time modal ─────────────────────────────────────────────────── */
+    const stepVals = { 'w-min': 5, 'w-inc': 0, 'b-min': 5, 'b-inc': 0 };
+    const stepConfig = { 'w-min': { min: 1, max: 180 }, 'w-inc': { min: 0, max: 60 }, 'b-min': { min: 1, max: 180 }, 'b-inc': { min: 0, max: 60 } };
+
+    function setStep(id, val) {
+      const { min, max } = stepConfig[id];
+      stepVals[id] = Math.max(min, Math.min(max, val));
+      document.getElementById(id + '-val').textContent = stepVals[id];
+      if (syncCheck.checked && id.startsWith('w-')) {
+        const bid = 'b-' + id.slice(2);
+        stepVals[bid] = stepVals[id];
+        document.getElementById(bid + '-val').textContent = stepVals[bid];
+      }
+    }
+
+    function setBlackDisabled(d) { document.querySelectorAll('.step-black').forEach(el => el.classList.toggle('disabled', d)); }
+
+    function bindSteppers() {
+      document.querySelectorAll('.step-btn').forEach(btn => {
+        let holdTimer, holdInterval;
+        const go = () => setStep(btn.dataset.id, stepVals[btn.dataset.id] + parseInt(btn.dataset.dir, 10));
+        btn.addEventListener('pointerdown', e => { e.preventDefault(); go(); holdTimer = setTimeout(() => { holdInterval = setInterval(go, 80); }, 400); });
+        const stop = () => { clearTimeout(holdTimer); clearInterval(holdInterval); };
+        btn.addEventListener('pointerup', stop); btn.addEventListener('pointerleave', stop); btn.addEventListener('pointercancel', stop);
+      });
+    }
+
+    function openCustomModal() {
+      stepVals['w-min'] = Math.round(baseTimes[0] / 60); stepVals['w-inc'] = increments[0];
+      stepVals['b-min'] = Math.round(baseTimes[1] / 60); stepVals['b-inc'] = increments[1];
+      ['w-min', 'w-inc', 'b-min', 'b-inc'].forEach(id => { document.getElementById(id + '-val').textContent = stepVals[id]; });
+      const sym = baseTimes[0] === baseTimes[1] && increments[0] === increments[1];
+      syncCheck.checked = sym; setBlackDisabled(sym);
+      modal.classList.add('show');
+    }
+
+    syncCheck.addEventListener('change', () => {
+      setBlackDisabled(syncCheck.checked);
+      if (syncCheck.checked) {
+        stepVals['b-min'] = stepVals['w-min']; stepVals['b-inc'] = stepVals['w-inc'];
+        document.getElementById('b-min-val').textContent = stepVals['b-min'];
+        document.getElementById('b-inc-val').textContent = stepVals['b-inc'];
+      }
+    });
+
+    document.getElementById('modal-cancel').addEventListener('click', () => modal.classList.remove('show'));
+    document.getElementById('modal-ok').addEventListener('click', () => {
+      baseTimes = [stepVals['w-min'] * 60, stepVals['b-min'] * 60];
+      increments = [stepVals['w-inc'], stepVals['b-inc']];
+      modal.classList.remove('show');
+      afterTimeSelect();
+    });
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
+
+    /* ── Init ──────────────────────────────────────────────────────────────── */
+    buildSelector();
+    bindSteppers();
+
+    // 0.5s blank → 2.2s rise+clear → 2.46s hold → 0.84s blur = ~6s
+    setTimeout(() => switchView(introEl, homeEl), 5160);
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => { }));
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>ChessTime — Generate Icons</title>
+  <link href="https://fonts.googleapis.com/css2?family
+  =Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #111;
+      color: #c89858;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      gap: 32px;
+    }
+
+    h1 {
+      font-size: 24px;
+      letter-spacing: 4px;
+    }
+
+    .row {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    canvas {
+      border-radius: 22%;
+      border: 1px solid #4a2c10;
+    }
+
+    a {
+      color: #c89858;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 8px 18px;
+      border: 1px solid #c8860a;
+      border-radius: 6px;
+    }
+
+    a:hover {
+      background: #c8860a;
+      color: #000;
+    }
+
+    p {
+      font-size: 12px;
+      color: #6a4020;
+      max-width: 500px;
+      text-align: center;
+      line-height: 1.7;
+      letter-spacing: 1px;
+    }
+
+    code {
+      background: #200c03;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>CHESSTIME — ICON GENERATOR</h1>
+  <div class="row" id="canvases"></div>
+  <p>
+    1. Click each <strong>Download</strong> button and save the file.<br>
+    2. Replace <code>icon-apple.png</code>, <code>icon-192.png</code>, <code>icon-512.png</code> in your project folder
+    with the downloaded files.<br>
+    3. On your iPhone: press &amp; hold the ChessTime app → <strong>Remove App</strong> → open Safari → navigate to the
+    page → tap the Share button → <strong>Add to Home Screen</strong>.
+  </p>
+  <script>
+    const SIZES = [
+      { name: 'icon-apple.png', size: 180 },
+      { name: 'icon-192.png', size: 192 },
+      { name: 'icon-512.png', size: 512 },
+    ];
+
+    const BG = '#1e0c03';
+    const GOLD = '#c89858';
+    const FONT = "'Bebas Neue', Impact, sans-serif";
+
+    function drawIcon(canvas, size) {
+      const ctx = canvas.getContext('2d');
+      const pad = size * 0.06;
+      const w = size - pad * 2;
+      const fs = size * 0.365;
+      const gap = fs * 0.86;
+
+      ctx.fillStyle = BG;
+      ctx.fillRect(0, 0, size, size);
+
+      ctx.fillStyle = GOLD;
+      ctx.font = `${fs}px ${FONT}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+
+      // Stretch text to ~88% of canvas width
+      const target = size * 0.88;
+      ctx.save();
+      const chessW = ctx.measureText('CHESS').width;
+      const timeW = ctx.measureText('TIME').width;
+      const scaleX = target / Math.max(chessW, timeW);
+      ctx.translate(size / 2, 0);
+      ctx.scale(scaleX, 1);
+      ctx.fillText('CHESS', 0, size / 2 - gap * 0.04);
+      ctx.fillText('TIME', 0, size / 2 + gap * 0.9);
+      ctx.restore();
+    }
+
+    function waitForFont() {
+      return document.fonts.load(`48px 'Bebas Neue'`);
+    }
+
+    waitForFont().then(() => {
+      const row = document.getElementById('canvases');
+      SIZES.forEach(({ name, size }) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const display = Math.min(size, 192);
+        canvas.style.width = display + 'px';
+        canvas.style.height = display + 'px';
+
+        drawIcon(canvas, size);
+
+        const label = document.createElement('div');
+        label.textContent = `${name} (${size}×${size})`;
+        label.style.fontSize = '11px';
+        label.style.letterSpacing = '1px';
+
+        const link = document.createElement('a');
+        link.textContent = 'Download';
+        link.download = name;
+        link.href = canvas.toDataURL('image/png');
+
+        card.append(canvas, label, link);
+        row.appendChild(card);
+      });
+    });
+  </script>
+</body>
+
+</html>

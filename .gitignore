@@ -1,0 +1,20 @@
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Accidental Windows artifacts
+nul
+
+# Unused folders
+samenvat/
+
+# Summary merger tool (local only)
+summary-merger.html
+test-merger.html
+test-merger-auto.html
+test-merger-node.js
+
+# Python
+__pycache__/
+*.pyc

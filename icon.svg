@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0d0700"/>
+  <!-- "CHESS" stretched wide to match the app's scaleX(1.4) intro style -->
+  <text
+    x="256" y="238"
+    font-family="'Bebas Neue', Impact, 'Arial Narrow', sans-serif"
+    font-size="185"
+    fill="#c89858"
+    text-anchor="middle"
+    textLength="448"
+    lengthAdjust="spacingAndGlyphs">CHESS</text>
+  <!-- "TIME" same treatment -->
+  <text
+    x="256" y="418"
+    font-family="'Bebas Neue', Impact, 'Arial Narrow', sans-serif"
+    font-size="185"
+    fill="#c89858"
+    text-anchor="middle"
+    textLength="448"
+    lengthAdjust="spacingAndGlyphs">TIME</text>
+</svg>
