@@ -120,8 +120,8 @@
     }
 
     .home-tiles {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
       width: 100%;
       max-width: 400px;
@@ -131,14 +131,12 @@
       background: #2c1a08;
       border: 1px solid #4c2c14;
       border-radius: 16px;
-      aspect-ratio: 1;
+      padding: 18px 24px;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
+      gap: 16px;
       cursor: pointer;
-      text-align: center;
       transition: background 0.15s, border-color 0.15s, transform 0.12s;
       overflow: hidden;
     }
@@ -163,9 +161,10 @@
 
     .home-tile-name--stack {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      line-height: 0.9;
+      flex-direction: row;
+      align-items: baseline;
+      gap: 8px;
+      line-height: 1;
     }
 
     .home-tile-desc {
