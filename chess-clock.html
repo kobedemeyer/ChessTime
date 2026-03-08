@@ -131,11 +131,12 @@
       background: #2c1a08;
       border: 1px solid #4c2c14;
       border-radius: 16px;
-      padding: 18px 24px;
+      padding: 20px 24px;
       display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 16px;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      min-height: 110px;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s, transform 0.12s;
       overflow: hidden;
@@ -152,28 +153,40 @@
       line-height: 1;
     }
 
+    .home-tile-top {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 14px;
+    }
+
     .home-tile-name {
       font-family: 'Bebas Neue', sans-serif;
       font-size: 26px;
       color: #c89858;
       letter-spacing: 4px;
-    }
-
-    .home-tile-name--stack {
-      display: flex;
-      flex-direction: row;
-      align-items: baseline;
-      gap: 8px;
       line-height: 1;
     }
 
     .home-tile-desc {
-      font-size: 10px;
-      font-weight: 700;
+      font-family: 'Barlow', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
       color: #906030;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      line-height: 1.5;
+      letter-spacing: 0.5px;
+      line-height: 1.4;
+      max-width: 70%;
+      margin-top: 4px;
+    }
+
+    .home-tile-graphic {
+      position: absolute;
+      bottom: 10px;
+      right: 16px;
+      font-size: 44px;
+      opacity: 0.15;
+      line-height: 1;
+      pointer-events: none;
     }
 
     /* ══════════════════════════════════════
@@ -2223,23 +2236,36 @@
     </div>
     <div class="home-tiles">
       <div class="home-tile" id="home-clock">
-        <div class="home-tile-icon">⏱</div>
-        <div class="home-tile-name home-tile-name--stack">
-          <span>Chess</span>
-          <span>Clock</span>
+        <div class="home-tile-top">
+          <div class="home-tile-icon">⏱</div>
+          <div class="home-tile-name">Chess Clock</div>
         </div>
+        <div class="home-tile-desc">Start a timed game with presets or custom time controls and time-odds support.</div>
+        <div class="home-tile-graphic">♔</div>
       </div>
       <div class="home-tile" id="home-records">
-        <div class="home-tile-icon">⚔</div>
-        <div class="home-tile-name">Record</div>
+        <div class="home-tile-top">
+          <div class="home-tile-icon">⚔</div>
+          <div class="home-tile-name">Record</div>
+        </div>
+        <div class="home-tile-desc">View head-to-head stats, ELO ratings, and match history between players.</div>
+        <div class="home-tile-graphic">📊</div>
       </div>
       <div class="home-tile" id="home-openings">
-        <div class="home-tile-icon">♟</div>
-        <div class="home-tile-name">Random</div>
+        <div class="home-tile-top">
+          <div class="home-tile-icon">♟</div>
+          <div class="home-tile-name">Random</div>
+        </div>
+        <div class="home-tile-desc">Spin the wheel and get a random chess opening to play — great for practice.</div>
+        <div class="home-tile-graphic">🎲</div>
       </div>
       <div class="home-tile" id="home-battle">
-        <div class="home-tile-icon">⚡</div>
-        <div class="home-tile-name">Overkill</div>
+        <div class="home-tile-top">
+          <div class="home-tile-icon">⚡</div>
+          <div class="home-tile-name">Overkill</div>
+        </div>
+        <div class="home-tile-desc">Battle chess with special abilities like Splash Damage and Ghost Move.</div>
+        <div class="home-tile-graphic">💥</div>
       </div>
     </div>
   </div>
