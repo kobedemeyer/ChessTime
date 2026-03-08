@@ -1,4 +1,4 @@
-const CACHE = 'chess-clock-v9';
+const CACHE = 'chess-clock-v10';
 const FILES = [
   './chess-clock.html',
   './manifest.json',
