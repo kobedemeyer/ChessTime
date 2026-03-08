@@ -181,12 +181,15 @@
 
     .home-tile-graphic {
       position: absolute;
-      bottom: 10px;
-      right: 16px;
-      font-size: 44px;
-      opacity: 0.15;
+      bottom: 8px;
+      right: 12px;
+      opacity: 0.18;
       line-height: 1;
       pointer-events: none;
+    }
+
+    .home-tile-graphic svg {
+      display: block;
     }
 
     /* ══════════════════════════════════════
@@ -2241,7 +2244,18 @@
           <div class="home-tile-name">Chess Clock</div>
         </div>
         <div class="home-tile-desc">Start a timed game with presets or custom time controls and time-odds support.</div>
-        <div class="home-tile-graphic">♔</div>
+        <div class="home-tile-graphic">
+          <!-- Mini clock panels preview -->
+          <svg width="72" height="80" viewBox="0 0 72 80" fill="none">
+            <rect x="2" y="2" width="30" height="76" rx="6" stroke="#c89858" stroke-width="1.5"/>
+            <rect x="40" y="2" width="30" height="76" rx="6" stroke="#c89858" stroke-width="1.5"/>
+            <text x="17" y="38" text-anchor="middle" fill="#c89858" font-family="Bebas Neue,sans-serif" font-size="11">5:00</text>
+            <text x="55" y="38" text-anchor="middle" fill="#c89858" font-family="Bebas Neue,sans-serif" font-size="11">5:00</text>
+            <circle cx="17" cy="50" r="2.5" fill="#c89858"/>
+            <text x="17" y="24" text-anchor="middle" fill="#c89858" font-size="6" font-family="Barlow,sans-serif">White</text>
+            <text x="55" y="24" text-anchor="middle" fill="#c89858" font-size="6" font-family="Barlow,sans-serif">Black</text>
+          </svg>
+        </div>
       </div>
       <div class="home-tile" id="home-records">
         <div class="home-tile-top">
@@ -2249,7 +2263,23 @@
           <div class="home-tile-name">Record</div>
         </div>
         <div class="home-tile-desc">View head-to-head stats, ELO ratings, and match history between players.</div>
-        <div class="home-tile-graphic">📊</div>
+        <div class="home-tile-graphic">
+          <!-- Mini leaderboard preview -->
+          <svg width="68" height="80" viewBox="0 0 68 80" fill="none">
+            <rect x="2" y="2" width="64" height="16" rx="4" stroke="#c89858" stroke-width="1"/>
+            <text x="10" y="13" fill="#c89858" font-size="7" font-family="Barlow,sans-serif" font-weight="600">1. Alice</text>
+            <text x="52" y="13" fill="#c89858" font-size="6" font-family="Barlow,sans-serif">1340</text>
+            <rect x="2" y="22" width="64" height="16" rx="4" stroke="#c89858" stroke-width="1"/>
+            <text x="10" y="33" fill="#c89858" font-size="7" font-family="Barlow,sans-serif" font-weight="600">2. Bob</text>
+            <text x="52" y="33" fill="#c89858" font-size="6" font-family="Barlow,sans-serif">1280</text>
+            <rect x="2" y="42" width="64" height="16" rx="4" stroke="#c89858" stroke-width="1"/>
+            <text x="10" y="53" fill="#c89858" font-size="7" font-family="Barlow,sans-serif" font-weight="600">3. Carol</text>
+            <text x="52" y="53" fill="#c89858" font-size="6" font-family="Barlow,sans-serif">1215</text>
+            <rect x="2" y="62" width="64" height="16" rx="4" stroke="#c89858" stroke-width="1"/>
+            <text x="10" y="73" fill="#c89858" font-size="7" font-family="Barlow,sans-serif" font-weight="600">4. Dave</text>
+            <text x="52" y="73" fill="#c89858" font-size="6" font-family="Barlow,sans-serif">1190</text>
+          </svg>
+        </div>
       </div>
       <div class="home-tile" id="home-openings">
         <div class="home-tile-top">
@@ -2257,7 +2287,19 @@
           <div class="home-tile-name">Random</div>
         </div>
         <div class="home-tile-desc">Spin the wheel and get a random chess opening to play — great for practice.</div>
-        <div class="home-tile-graphic">🎲</div>
+        <div class="home-tile-graphic">
+          <!-- Mini carousel cards preview -->
+          <svg width="72" height="80" viewBox="0 0 72 80" fill="none">
+            <rect x="2" y="2" width="68" height="34" rx="6" stroke="#c89858" stroke-width="1.5"/>
+            <rect x="6" y="8" width="28" height="8" rx="3" fill="#c89858" opacity="0.3"/>
+            <text x="14" y="14" fill="#1e0c03" font-size="5" font-family="Barlow,sans-serif" font-weight="700">White</text>
+            <text x="36" y="28" text-anchor="middle" fill="#c89858" font-size="6" font-family="Barlow,sans-serif">Sicilian Defense</text>
+            <rect x="2" y="42" width="68" height="34" rx="6" stroke="#c89858" stroke-width="1.5"/>
+            <rect x="6" y="48" width="26" height="8" rx="3" fill="#c89858" opacity="0.6"/>
+            <text x="13" y="54" fill="#1e0c03" font-size="5" font-family="Barlow,sans-serif" font-weight="700">Black</text>
+            <text x="36" y="68" text-anchor="middle" fill="#c89858" font-size="6" font-family="Barlow,sans-serif">King's Indian</text>
+          </svg>
+        </div>
       </div>
       <div class="home-tile" id="home-battle">
         <div class="home-tile-top">
@@ -2265,7 +2307,37 @@
           <div class="home-tile-name">Overkill</div>
         </div>
         <div class="home-tile-desc">Battle chess with special abilities like Splash Damage and Ghost Move.</div>
-        <div class="home-tile-graphic">💥</div>
+        <div class="home-tile-graphic">
+          <!-- Mini chess board with splash effect -->
+          <svg width="75" height="80" viewBox="0 0 75 80" fill="none">
+            <!-- 5x5 board -->
+            <rect x="2" y="5" width="14" height="14" fill="#c89858" opacity="0.3"/>
+            <rect x="16" y="5" width="14" height="14" fill="#c89858" opacity="0.6"/>
+            <rect x="30" y="5" width="14" height="14" fill="#c89858" opacity="0.3"/>
+            <rect x="44" y="5" width="14" height="14" fill="#c89858" opacity="0.6"/>
+            <rect x="58" y="5" width="14" height="14" fill="#c89858" opacity="0.3"/>
+            <rect x="2" y="19" width="14" height="14" fill="#c89858" opacity="0.6"/>
+            <rect x="16" y="19" width="14" height="14" fill="#c89858" opacity="0.3"/>
+            <rect x="30" y="19" width="14" height="14" fill="#c89858" opacity="0.6"/>
+            <rect x="44" y="19" width="14" height="14" fill="#c89858" opacity="0.3"/>
+            <rect x="58" y="19" width="14" height="14" fill="#c89858" opacity="0.6"/>
+            <rect x="2" y="33" width="14" height="14" fill="#c89858" opacity="0.3"/>
+            <rect x="16" y="33" width="14" height="14" fill="#c89858" opacity="0.6"/>
+            <rect x="30" y="33" width="14" height="14" fill="#c89858" opacity="0.3"/>
+            <rect x="44" y="33" width="14" height="14" fill="#c89858" opacity="0.6"/>
+            <rect x="58" y="33" width="14" height="14" fill="#c89858" opacity="0.3"/>
+            <!-- Splash rings on center square -->
+            <circle cx="37" cy="26" r="8" stroke="#c89858" stroke-width="1" opacity="0.7"/>
+            <circle cx="37" cy="26" r="13" stroke="#c89858" stroke-width="0.7" opacity="0.4"/>
+            <circle cx="37" cy="26" r="18" stroke="#c89858" stroke-width="0.5" opacity="0.2"/>
+            <text x="37" y="29" text-anchor="middle" fill="#c89858" font-size="10">⚡</text>
+            <!-- Ability buttons -->
+            <rect x="6" y="56" width="28" height="12" rx="4" stroke="#c89858" stroke-width="1"/>
+            <text x="20" y="65" text-anchor="middle" fill="#c89858" font-size="6" font-family="Barlow,sans-serif">⚡ Splash</text>
+            <rect x="40" y="56" width="28" height="12" rx="4" stroke="#c89858" stroke-width="1"/>
+            <text x="54" y="65" text-anchor="middle" fill="#c89858" font-size="6" font-family="Barlow,sans-serif">👻 Ghost</text>
+          </svg>
+        </div>
       </div>
     </div>
   </div>
